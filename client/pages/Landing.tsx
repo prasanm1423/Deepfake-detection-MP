@@ -315,59 +315,62 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto text-center">
-          <Card className="max-w-4xl mx-auto glass-effect border-primary/20">
-            <CardContent className="p-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Ready to Protect Against Deepfakes?
-              </h2>
-              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Join thousands of security professionals who trust DeepGuard to detect manipulated media and protect their organizations.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/signup">
-                  <Button size="lg" className="min-w-[200px]">
-                    Start Free Trial
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link to="/demo">
-                  <Button size="lg" variant="outline" className="min-w-[200px]">
-                    Schedule Demo
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+      {/* CTA Section removed per request */}
 
       {/* Footer */}
       <footer className="border-t border-border/20 py-12 px-4">
         <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="p-2 bg-primary rounded-lg">
-                <Shield className="h-6 w-6 text-primary-foreground" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="p-2 bg-primary rounded-lg">
+                  <Shield className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground">DeepGuard</h3>
+                  <p className="text-sm text-muted-foreground">AI-Powered Deepfake Detection</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-foreground">DeepGuard</h3>
-                <p className="text-sm text-muted-foreground">AI-Powered Deepfake Detection</p>
-              </div>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Detect manipulated media across images, videos, and audio with fast, accurate AI.
+              </p>
             </div>
-            
-            <div className="flex space-x-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-foreground transition-colors">Contact</a>
-              <a href="#" className="hover:text-foreground transition-colors">Documentation</a>
+
+            <div>
+              <h4 className="font-semibold mb-3">Product</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a></li>
+                <li><a href="#faq" className="hover:text-foreground transition-colors">FAQ</a></li>
+                <li><Link to="/dashboard" className="hover:text-foreground transition-colors">Live Demo</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-3">Resources</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="https://sightengine.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">Sightengine</a></li>
+                <li><a href="https://www.resemble.ai" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">Resemble AI</a></li>
+                <li><a href="/" className="hover:text-foreground transition-colors">Documentation</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-3">Account</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link to="/login" className="hover:text-foreground transition-colors">Sign In</Link></li>
+                <li><Link to="/signup" className="hover:text-foreground transition-colors">Get Started</Link></li>
+                <li><a href="mailto:support@deepguard.app" className="hover:text-foreground transition-colors">Contact Support</a></li>
+              </ul>
             </div>
           </div>
-          
-          <div className="mt-8 pt-8 border-t border-border/20 text-center text-sm text-muted-foreground">
-            <p>&copy; 2024 DeepGuard. All rights reserved. Built with security and privacy in mind.</p>
+
+          <div className="mt-8 pt-8 border-t border-border/20 flex flex-col md:flex-row items-center justify-between text-sm text-muted-foreground">
+            <p className="mb-4 md:mb-0">&copy; 2024 DeepGuard. All rights reserved.</p>
+            <div className="flex space-x-6">
+              <a href="/" className="hover:text-foreground transition-colors">Privacy Policy</a>
+              <a href="/" className="hover:text-foreground transition-colors">Terms of Service</a>
+            </div>
           </div>
         </div>
       </footer>
