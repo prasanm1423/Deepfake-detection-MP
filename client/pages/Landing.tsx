@@ -1,12 +1,16 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Shield, Zap, Eye, Camera, Upload, BarChart3, CheckCircle, ArrowRight, Play, Star } from 'lucide-react'
+import { Shield, Zap, Eye, Camera, Upload, BarChart3, CheckCircle, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 
 export default function Landing() {
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false)
 
   const features = [
     {
@@ -90,24 +94,18 @@ export default function Landing() {
     }
   ]
 
-  const testimonials = [
+  const useCases = [
     {
-      name: "Sarah Chen",
-      role: "Security Analyst, TechCorp",
-      content: "DeepGuard has been instrumental in helping us verify the authenticity of media content. The accuracy is impressive and the API is easy to integrate.",
-      rating: 5
+      title: 'Social Media Moderation',
+      description: 'Flag and review potentially manipulated images, videos, and audio before they reach your audience.'
     },
     {
-      name: "Dr. Michael Rodriguez",
-      role: "Digital Forensics Expert",
-      content: "As a forensics investigator, I rely on DeepGuard daily. The detailed analysis reports and high confidence scores make it indispensable for our work.",
-      rating: 5
+      title: 'Corporate Security',
+      description: 'Protect your brand from impersonation and misinformation with real-time content analysis.'
     },
     {
-      name: "Emily Watson",
-      role: "Content Moderator, MediaFlow",
-      content: "The real-time detection capabilities have streamlined our content moderation process. We can now identify manipulated media instantly.",
-      rating: 5
+      title: 'Journalism & Fact-Checking',
+      description: 'Verify source media quickly with confidence scores and technical signals for editorial workflows.'
     }
   ]
 
@@ -127,7 +125,11 @@ export default function Landing() {
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
+              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors hidden md:inline">Features</a>
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors hidden md:inline">Pricing</a>
+              <a href="#faq" className="text-muted-foreground hover:text-foreground transition-colors hidden md:inline">FAQ</a>
+              <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors hidden md:inline">Live Demo</Link>
               <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">
                 Sign In
               </Link>
@@ -163,42 +165,26 @@ export default function Landing() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="min-w-[200px]"
-              onClick={() => setIsVideoPlaying(true)}
-            >
-              <Play className="mr-2 h-5 w-5" />
-              Watch Demo
-            </Button>
+            <Link to="/dashboard">
+              <Button size="lg" variant="secondary" className="min-w-[200px]">
+                Try Live Demo
+              </Button>
+            </Link>
           </div>
 
-          {/* Demo Video Placeholder */}
-          <div className="relative max-w-4xl mx-auto">
-            <div className="relative aspect-video bg-secondary/20 rounded-lg border-2 border-border/20 overflow-hidden">
-              {!isVideoPlaying ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20">
-                  <Button 
-                    size="lg" 
-                    className="rounded-full w-20 h-20"
-                    onClick={() => setIsVideoPlaying(true)}
-                  >
-                    <Play className="h-8 w-8" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-secondary/20">
-                  <p className="text-muted-foreground">Demo video would play here</p>
-                </div>
-              )}
-            </div>
+          {/* Hero Image */}
+          <div className="max-w-4xl mx-auto">
+            <img
+              src="/Gemini_Generated_Image_4ljay34ljay34lja.png"
+              alt="DeepGuard deepfake detection illustration"
+              className="w-full rounded-lg border border-border/20 shadow-md"
+            />
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 bg-secondary/5">
+      <section id="features" className="py-20 px-4 bg-secondary/5">
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -227,7 +213,29 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* Use Cases Section (replaces Testimonials) */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Built for Real-World Workflows</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Practical applications to help teams detect and prevent manipulated media across the content lifecycle.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {useCases.map((c, i) => (
+              <Card key={i} className="h-full hover:shadow-lg transition-shadow duration-300">
+                <CardHeader>
+                  <CardTitle className="text-xl">{c.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{c.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section moved below Use Cases */}
       <section className="py-20 px-4" id="pricing">
         <div className="container mx-auto">
           <div className="text-center mb-16">
@@ -238,7 +246,6 @@ export default function Landing() {
               Choose the plan that fits your needs. Upgrade or downgrade at any time.
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {pricingTiers.map((tier, index) => (
               <Card key={index} className={`relative h-full ${tier.popular ? 'border-primary shadow-lg scale-105' : ''}`}>
@@ -247,7 +254,6 @@ export default function Landing() {
                     Most Popular
                   </Badge>
                 )}
-                
                 <CardHeader className="text-center">
                   <CardTitle className="text-2xl">{tier.name}</CardTitle>
                   <div className="mt-4">
@@ -256,7 +262,6 @@ export default function Landing() {
                   </div>
                   <p className="text-muted-foreground mt-2">{tier.description}</p>
                 </CardHeader>
-                
                 <CardContent className="flex-1">
                   <ul className="space-y-3 mb-8">
                     {tier.features.map((feature, featureIndex) => (
@@ -266,7 +271,6 @@ export default function Landing() {
                       </li>
                     ))}
                   </ul>
-                  
                   <Link to="/signup" className="block">
                     <Button className={`w-full ${tier.popular ? '' : 'variant-outline'}`}>
                       {tier.buttonText}
@@ -279,36 +283,35 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 px-4 bg-secondary/5">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Trusted by Security Professionals
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              See what our customers say about DeepGuard's accuracy and reliability.
-            </p>
-          </div>
+      {/* Testimonials removed */}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="h-full">
-                <CardContent className="p-6">
-                  <div className="flex mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-foreground mb-4 italic">"{testimonial.content}"</p>
-                  <div>
-                    <p className="font-semibold text-foreground">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+      {/* FAQ Section */}
+      <section id="faq" className="py-20 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Frequently Asked Questions</h2>
+            <p className="text-xl text-muted-foreground">Quick answers to common questions about DeepGuard.</p>
           </div>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Is my uploaded content stored permanently?</AccordionTrigger>
+              <AccordionContent>
+                No. Files are processed for analysis and cleaned up automatically. We do not keep permanent copies.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>Do I need API keys to try the demo?</AccordionTrigger>
+              <AccordionContent>
+                No. The live demo works without keys. For production accuracy, configure service keys in your server environment.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>What file types and sizes are supported?</AccordionTrigger>
+              <AccordionContent>
+                Images (JPEG, PNG, WebP), videos (MP4, WebM, MOV), and audio (WAV, MP3, M4A, OGG). Free tier up to 10MB; Pro up to 50MB.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </section>
 
