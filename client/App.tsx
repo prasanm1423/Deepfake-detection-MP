@@ -11,6 +11,7 @@ import { isSupabaseConfigured } from "./lib/supabase";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Pricing from "./pages/Pricing";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import SetupGuide from "./components/SetupGuide";
@@ -77,6 +78,7 @@ const AppRoutes = () => {
           <Signup />
         </PublicRoute>
       } />
+      <Route path="/pricing" element={<Pricing />} />
 
       {/* Protected routes */}
       <Route path="/dashboard" element={

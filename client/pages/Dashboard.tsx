@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Shield, Upload, Camera, BarChart3, User, LogOut, Crown, Zap, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ import { AnalysisResult } from '@shared/api'
 import { trackAnalysis } from '@/lib/supabase'
 
 export default function Dashboard() {
+  const navigate = useNavigate()
   const { user, profile, monthlyUsage, usageLimit, canAnalyze, signOut, refreshUsage } = useAuth()
   const [results, setResults] = useState<AnalysisResult[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -132,7 +134,7 @@ export default function Dashboard() {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               <strong>Usage Limit Reached:</strong> You've used all {usageLimit} analyses for this month. 
-              <a href="#upgrade" className="text-primary hover:underline ml-1">Upgrade your plan</a> for more analyses.
+              <Link to="/pricing" className="text-primary hover:underline ml-1">Upgrade your plan</Link> for more analyses.
             </AlertDescription>
           </Alert>
         )}
@@ -261,7 +263,7 @@ export default function Dashboard() {
                     <p className="text-muted-foreground mb-4">
                       You've used all your monthly analyses. Upgrade to continue detecting deepfakes.
                     </p>
-                    <Button>Upgrade Plan</Button>
+                    <Button onClick={() => navigate('/pricing')}>Upgrade Plan</Button>
                   </div>
                 )}
               </CardContent>
@@ -281,7 +283,7 @@ export default function Dashboard() {
                     {tierInfo.icon}
                     <span className="ml-1">{tierInfo.name} Plan</span>
                   </Badge>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
                     Upgrade Plan
                   </Button>
                 </div>

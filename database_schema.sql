@@ -161,5 +161,48 @@ GRANT ALL ON public.user_usage TO anon, authenticated;
 GRANT SELECT ON public.subscription_limits TO anon, authenticated;
 
 -- Enable realtime for tables (optional, for real-time subscriptions)
-ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_usage;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'profiles'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'user_usage'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.user_usage;
+  END IF;
+END $$;
+
+-- Simulated pricing: requests for Pro access (no real payments)
+CREATE TABLE IF NOT EXISTS public.subscription_requests (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users NOT NULL,
+    plan TEXT NOT NULL CHECK (plan IN ('pro','enterprise')),
+    message TEXT,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    reviewed_at TIMESTAMP WITH TIME ZONE
+);
+
+ALTER TABLE public.subscription_requests ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage their own subscription requests" ON public.subscription_requests;
+CREATE POLICY "Users manage their own subscription requests" ON public.subscription_requests
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+-- Optional admin policy: allow service role to review
+GRANT ALL ON public.subscription_requests TO anon, authenticated;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'subscription_requests'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.subscription_requests;
+  END IF;
+END $$;

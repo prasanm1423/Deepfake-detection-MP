@@ -271,7 +271,7 @@ export default function Landing() {
                       </li>
                     ))}
                   </ul>
-                  <Link to="/signup" className="block">
+                  <Link to="/pricing" className="block">
                     <Button className={`w-full ${tier.popular ? '' : 'variant-outline'}`}>
                       {tier.buttonText}
                     </Button>
