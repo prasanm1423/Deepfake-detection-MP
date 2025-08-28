@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo.js";
 import { testSightengineAPI } from "./routes/test-api.js";
+import { debugFileUpload } from "./routes/analyze.js";
 
 export function createServer() {
   const app = express();
@@ -22,6 +23,21 @@ export function createServer() {
 
   // Test API credentials
   app.get("/api/test-sightengine", testSightengineAPI);
+  
+  // Debug file upload endpoint
+  app.post("/api/debug-upload", async (req, res) => {
+    try {
+      const { upload } = await import("./routes/analyze.js");
+      upload.single('file')(req, res, (err: any) => {
+        if (err) {
+          return res.status(400).json({ success: false, error: err.message });
+        }
+        debugFileUpload(req, res, () => {});
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Debug service unavailable' });
+    }
+  });
 
   // Deepfake analysis routes - lazy load to avoid multer import at startup
   app.post("/api/analyze", async (req, res) => {

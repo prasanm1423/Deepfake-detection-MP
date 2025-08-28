@@ -46,10 +46,12 @@ async function analyzeImage(filePath: string): Promise<any> {
   if (!SIGHTENGINE_USER || !SIGHTENGINE_SECRET) {
     // Graceful fallback to demo response when credentials are missing
     console.log('Sightengine credentials missing. Using image demo fallback.');
-    const isLikelyDeepfake = Math.random() > 0.8;
+    
+    // Generate realistic demo scores: 0-1 scale where higher = more likely fake
+    const isLikelyDeepfake = Math.random() > 0.8; // 20% chance of deepfake
     const confidence = isLikelyDeepfake
-      ? Math.random() * 0.25 + 0.05  // 5-30% for deepfakes (low score = fake)
-      : Math.random() * 0.30 + 0.65; // 65-95% for authentic (high score = real)
+      ? Math.random() * 0.3 + 0.7  // 70-100% for deepfakes (high score = fake)
+      : Math.random() * 0.4 + 0.1; // 10-50% for authentic (low score = real)
 
     return {
       status: 'success',
@@ -76,14 +78,44 @@ async function analyzeImage(filePath: string): Promise<any> {
 
   const form = new FormData();
 
-  // Add form fields in the order that works best
+  // Add form fields according to Sightengine API documentation
   form.append('api_user', String(SIGHTENGINE_USER));
   form.append('api_secret', String(SIGHTENGINE_SECRET));
-  form.append('models', 'deepfake');
-  form.append('media', fs.createReadStream(filePath));
+  form.append('models', 'deepfake'); // Only use the valid 'deepfake' model
+  
+  // Validate file before sending
+  const fileStats = fs.statSync(filePath);
+  if (fileStats.size === 0) {
+    throw new Error('Uploaded file is empty');
+  }
+  
+  // Check file size limit (Sightengine has 10MB limit for images)
+  if (fileStats.size > 10 * 1024 * 1024) {
+    throw new Error('File size exceeds 10MB limit');
+  }
+  
+  // Get file extension for better debugging
+  const fileExtension = filePath.split('.').pop()?.toLowerCase();
+  console.log('- File extension:', fileExtension);
+  
+  // Ensure we're sending the file as a buffer stream
+  const fileBuffer = fs.readFileSync(filePath);
+  form.append('media', fileBuffer, {
+    filename: `image.${fileExtension || 'jpg'}`,
+    contentType: `image/${fileExtension || 'jpeg'}`
+  });
 
   try {
     console.log('Sending request to Sightengine API with axios...');
+    console.log('Form data contents:');
+    console.log('- api_user:', SIGHTENGINE_USER);
+    console.log('- api_secret:', SIGHTENGINE_SECRET ? '[HIDDEN]' : 'MISSING');
+    console.log('- models: deepfake,ai_generated');
+    console.log('- media file exists:', fs.existsSync(filePath));
+    console.log('- media file size:', fs.statSync(filePath).size, 'bytes');
+    console.log('- media file path:', filePath);
+    
+    // FormData is ready with all required fields
 
     const response = await axios.post(
       'https://api.sightengine.com/1.0/check.json',
@@ -101,8 +133,8 @@ async function analyzeImage(filePath: string): Promise<any> {
     console.log('Sightengine API response:', JSON.stringify(data, null, 2));
 
     if (data.status === 'success') {
-      // Extract deepfake score (we're only using deepfake model for now)
-      const deepfakeScore = data.type?.deepfake || 0;
+      // Extract deepfake score from Sightengine API response
+      const deepfakeScore = data.deepfake?.prob || data.type?.deepfake || 0;
 
       return {
         status: 'success',
@@ -132,20 +164,51 @@ async function analyzeImage(filePath: string): Promise<any> {
       console.log('- Status:', error.response?.status);
       console.log('- Data:', error.response?.data);
       console.log('- Headers:', error.response?.headers);
+      console.log('- Error message:', error.message);
+      
+      // Log the actual request that failed
+      if (error.config) {
+        console.log('- Request URL:', error.config.url);
+        console.log('- Request method:', error.config.method);
+        console.log('- Request headers:', error.config.headers);
+      }
+      
+      // Log the full error response for debugging
+      if (error.response?.data) {
+        console.log('=== FULL ERROR RESPONSE ===');
+        console.log(JSON.stringify(error.response.data, null, 2));
+        console.log('=== END ERROR RESPONSE ===');
+      }
     }
 
     // Fallback to demo response if API fails
     console.log('Falling back to demo mode due to API error');
-    // Make demo more realistic - 80% chance of authentic, 20% chance of deepfake
-    const isLikelyDeepfake = Math.random() > 0.8;
+    
+    // Try to provide more helpful error information
+    let errorDetails = 'API call failed';
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 400) {
+        errorDetails = 'Bad request - check file format and size';
+      } else if (error.response?.status === 401) {
+        errorDetails = 'Authentication failed - check API credentials';
+      } else if (error.response?.status === 413) {
+        errorDetails = 'File too large - exceeds API limits';
+      } else {
+        errorDetails = `HTTP ${error.response?.status}: ${error.response?.data?.error || error.message}`;
+      }
+    }
+    
+    // Generate realistic demo scores: 0-1 scale where higher = more likely fake
+    const isLikelyDeepfake = Math.random() > 0.8; // 20% chance of deepfake
     const confidence = isLikelyDeepfake
-      ? Math.random() * 0.25 + 0.05  // 5-30% for deepfakes (low score = fake)
-      : Math.random() * 0.30 + 0.65; // 65-95% for authentic (high score = real)
+      ? Math.random() * 0.3 + 0.7  // 70-100% for deepfakes (high score = fake)
+      : Math.random() * 0.4 + 0.1; // 10-50% for authentic (low score = real)
 
     return {
       status: 'success',
       deepfake: {
         prob: confidence,
+        deepfake_score: confidence,
       },
       metadata: {
         width: 1024,
@@ -153,7 +216,7 @@ async function analyzeImage(filePath: string): Promise<any> {
         format: 'demo'
       },
       demo_mode: true,
-      error_message: error instanceof Error ? error.message : 'API call failed',
+      error_message: errorDetails,
       demo_note: `Fallback demo: ${isLikelyDeepfake ? 'Simulated deepfake detection' : 'Simulated authentic image'}`
     };
   }
@@ -169,15 +232,18 @@ async function analyzeVideo(filePath: string): Promise<any> {
   if (!SIGHTENGINE_USER || !SIGHTENGINE_SECRET) {
     // Graceful fallback to demo response when credentials are missing
     console.log('Sightengine credentials missing. Using video demo fallback.');
-    const isLikelyDeepfake = Math.random() > 0.8;
+    
+    // Generate realistic demo scores: 0-1 scale where higher = more likely fake
+    const isLikelyDeepfake = Math.random() > 0.8; // 20% chance of deepfake
     const confidence = isLikelyDeepfake
-      ? Math.random() * 0.25 + 0.05  // 5-30% for deepfakes (low score = fake)
-      : Math.random() * 0.35 + 0.65; // 65-100% for authentic (high score = real)
+      ? Math.random() * 0.3 + 0.7  // 70-100% for deepfakes (high score = fake)
+      : Math.random() * 0.4 + 0.1; // 10-50% for authentic (low score = real)
 
     return {
       status: 'success',
       deepfake: {
         prob: confidence,
+        deepfake_score: confidence,
       },
       metadata: {
         duration: 15.6,
@@ -192,10 +258,10 @@ async function analyzeVideo(filePath: string): Promise<any> {
 
   const form = new FormData();
 
-  // Use deepfake model for video analysis
+  // Use proper models for video analysis according to Sightengine docs
   form.append('api_user', SIGHTENGINE_USER);
   form.append('api_secret', SIGHTENGINE_SECRET);
-  form.append('models', 'deepfake');
+  form.append('models', 'deepfake'); // Only use the valid 'deepfake' model
   form.append('media', fs.createReadStream(filePath));
 
   try {
@@ -217,25 +283,25 @@ async function analyzeVideo(filePath: string): Promise<any> {
     console.log('Sightengine Video API response:', JSON.stringify(data, null, 2));
 
     if (data.status === 'success') {
-      // Normalize deepfake score from various possible shapes
+      // Extract deepfake score from Sightengine Video API response
+      const deepfakeScore = data.deepfake?.prob || data.type?.deepfake || 0;
+      
+      // For videos, use the highest score across all scenes if available
       const scenes = Array.isArray(data.scenes) ? data.scenes : [];
-      const sceneScores = scenes
-        .map((s: any) => s?.type?.deepfake ?? s?.deepfake)
+      const sceneDeepfakeScores = scenes
+        .map((s: any) => s?.deepfake?.prob ?? s?.type?.deepfake ?? 0)
         .filter((v: any) => typeof v === 'number');
-      const bestSceneScore = sceneScores.length > 0 ? Math.max(...sceneScores) : undefined;
-
-      const deepfakeScore =
-        (typeof data.type?.deepfake === 'number' ? data.type.deepfake : undefined) ??
-        (typeof data.deepfake === 'number' ? data.deepfake : undefined) ??
-        (typeof data.summary?.type?.deepfake === 'number' ? data.summary.type.deepfake : undefined) ??
-        (typeof data.summary?.deepfake === 'number' ? data.summary.deepfake : undefined) ??
-        bestSceneScore ??
-        0;
+      
+      const maxSceneDeepfake = sceneDeepfakeScores.length > 0 ? Math.max(...sceneDeepfakeScores) : 0;
+      
+      // Use the highest score from either summary or scenes
+      const finalDeepfakeScore = Math.max(deepfakeScore, maxSceneDeepfake);
 
       return {
         status: 'success',
         deepfake: {
-          prob: deepfakeScore,
+          prob: finalDeepfakeScore,
+          deepfake_score: finalDeepfakeScore,
         },
         metadata: {
           duration: data.media?.duration ?? data.duration ?? 'unknown',
@@ -244,7 +310,7 @@ async function analyzeVideo(filePath: string): Promise<any> {
         },
         raw_response: data,
         detection_details: {
-          face_deepfake: deepfakeScore
+          face_deepfake: finalDeepfakeScore,
         }
       };
     } else {
@@ -320,6 +386,144 @@ async function analyzeAudio(filePath: string): Promise<any> {
 }
 
 /**
+ * Test Sightengine API credentials
+ */
+export const testSightengineAPI: RequestHandler = async (req, res) => {
+  try {
+    const SIGHTENGINE_USER = process.env.SIGHTENGINE_USER;
+    const SIGHTENGINE_SECRET = process.env.SIGHTENGINE_SECRET;
+
+    if (!SIGHTENGINE_USER || !SIGHTENGINE_SECRET) {
+      return res.status(400).json({
+        success: false,
+        error: 'Sightengine credentials not configured'
+      });
+    }
+
+    // Test with a simple API call
+    const testResponse = await axios.get('https://api.sightengine.com/1.0/check.json', {
+      params: {
+        api_user: SIGHTENGINE_USER,
+        api_secret: SIGHTENGINE_SECRET,
+        models: 'deepfake',
+        url: 'https://example.com/test.jpg' // Test with a dummy URL
+      },
+      timeout: 10000
+    });
+
+    res.json({
+      success: true,
+      message: 'Sightengine API credentials are valid',
+      response: testResponse.data
+    });
+
+  } catch (error) {
+    console.error('Sightengine API test error:', error);
+    
+    if (axios.isAxiosError(error)) {
+      res.status(400).json({
+        success: false,
+        error: 'Sightengine API test failed',
+        details: {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error during API test'
+      });
+    }
+  }
+};
+
+/**
+ * Debug file upload and API request
+ */
+export const debugFileUpload: RequestHandler = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No file uploaded'
+      });
+    }
+
+    const file = req.file;
+    const filePath = file.path;
+    
+    console.log('=== FILE UPLOAD DEBUG ===');
+    console.log('File info:', {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      path: filePath
+    });
+
+    // Check if file exists and get stats
+    if (fs.existsSync(filePath)) {
+      const stats = fs.statSync(filePath);
+      console.log('File stats:', {
+        exists: true,
+        size: stats.size,
+        isFile: stats.isFile(),
+        created: stats.birthtime,
+        modified: stats.mtime
+      });
+    } else {
+      console.log('File does not exist at path:', filePath);
+    }
+
+    // Test file reading
+    try {
+      const fileBuffer = fs.readFileSync(filePath);
+      console.log('File buffer size:', fileBuffer.length);
+      console.log('File buffer first 100 bytes:', fileBuffer.slice(0, 100));
+    } catch (readError) {
+      console.log('Error reading file:', readError);
+    }
+
+    // Test FormData creation
+    const form = new FormData();
+    form.append('api_user', process.env.SIGHTENGINE_USER || '');
+    form.append('api_secret', process.env.SIGHTENGINE_SECRET || '');
+    form.append('models', 'deepfake'); // Only use the valid 'deepfake' model
+    
+    try {
+      const fileBuffer = fs.readFileSync(filePath);
+      form.append('media', fileBuffer, {
+        filename: file.originalname || 'test.jpg',
+        contentType: file.mimetype || 'image/jpeg'
+      });
+      console.log('FormData created successfully');
+    } catch (formError) {
+      console.log('Error creating FormData:', formError);
+    }
+
+    res.json({
+      success: true,
+      message: 'File upload debug completed',
+      fileInfo: {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        path: filePath,
+        exists: fs.existsSync(filePath)
+      }
+    });
+
+  } catch (error) {
+    console.error('Debug error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Debug failed'
+    });
+  }
+};
+
+/**
  * Main analysis handler
  */
 export const handleAnalyze: RequestHandler = async (req, res) => {
@@ -344,7 +548,7 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
           apiResponse = await analyzeImage(filePath);
           analysisResult = {
             type: 'image',
-            isDeepfake: apiResponse.deepfake.prob < 0.5,
+            isDeepfake: apiResponse.deepfake.prob > 0.7, // Higher threshold for more accurate detection
             confidence: apiResponse.deepfake.prob,
             analysisTime: Date.now() - startTime,
             sightengineData: apiResponse,
@@ -356,7 +560,7 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
           apiResponse = await analyzeVideo(filePath);
           analysisResult = {
             type: 'video',
-            isDeepfake: apiResponse.deepfake.prob < 0.5,
+            isDeepfake: apiResponse.deepfake.prob > 0.7, // Higher threshold for more accurate detection
             confidence: apiResponse.deepfake.prob,
             analysisTime: Date.now() - startTime,
             sightengineData: apiResponse,
