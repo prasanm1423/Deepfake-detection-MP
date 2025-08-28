@@ -12,13 +12,14 @@ import { FileUpload } from '@/components/FileUpload'
 import { CameraCapture } from '@/components/CameraCapture'
 import { ResultsDashboard } from '@/components/ResultsDashboard'
 import { AnalysisResult } from '@shared/api'
-import { trackAnalysis } from '@/lib/supabase'
+import { trackAnalysis, testSupabaseConnection } from '@/lib/supabase'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const { user, profile, monthlyUsage, usageLimit, canAnalyze, signOut, refreshUsage } = useAuth()
   const [results, setResults] = useState<AnalysisResult[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [supabaseStatus, setSupabaseStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking')
 
   const usagePercentage = usageLimit === -1 ? 0 : (monthlyUsage / usageLimit) * 100
 
@@ -57,6 +58,21 @@ export default function Dashboard() {
 
   const tierInfo = getTierInfo(profile?.subscription_tier || 'free')
 
+  // Check Supabase connection status
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const isConnected = await testSupabaseConnection()
+        setSupabaseStatus(isConnected ? 'connected' : 'disconnected')
+      } catch (error) {
+        console.warn('Failed to check Supabase connection:', error)
+        setSupabaseStatus('disconnected')
+      }
+    }
+    
+    checkConnection()
+  }, [])
+
   const handleAnalysisStart = () => {
     setIsAnalyzing(true)
   }
@@ -67,7 +83,7 @@ export default function Dashboard() {
 
     // Track the analysis in the database
     try {
-      await trackAnalysis({
+      const trackingResult = await trackAnalysis({
         analysis_type: result.type,
         file_size: result.metadata?.file_size,
         is_deepfake: result.isDeepfake,
@@ -76,10 +92,16 @@ export default function Dashboard() {
         api_provider: result.type === 'audio' ? 'resemble' : 'sightengine'
       })
       
-      // Refresh usage count
-      await refreshUsage()
+      if (trackingResult.error) {
+        console.warn('Analysis tracking failed (non-critical):', trackingResult.error)
+        // Don't block the UI - tracking is optional
+      } else {
+        // Refresh usage count only if tracking succeeded
+        await refreshUsage()
+      }
     } catch (error) {
-      console.error('Error tracking analysis:', error)
+      console.warn('Error tracking analysis (non-critical):', error)
+      // Don't block the UI - tracking is optional
     }
   }
 
@@ -113,6 +135,15 @@ export default function Dashboard() {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Connection Status */}
+              <Badge 
+                variant={supabaseStatus === 'connected' ? 'default' : 'destructive'}
+                className="text-xs"
+              >
+                {supabaseStatus === 'connected' ? '🟢 Connected' : 
+                 supabaseStatus === 'checking' ? '🟡 Checking...' : '🔴 Disconnected'}
+              </Badge>
+              
               <Badge className={tierInfo.color}>
                 {tierInfo.icon}
                 <span className="ml-1">{tierInfo.name}</span>

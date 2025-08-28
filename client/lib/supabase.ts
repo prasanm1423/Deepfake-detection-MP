@@ -3,12 +3,33 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// Create a dummy client if environment variables are not set (for development)
+// Create Supabase client with error handling
 export const supabase = (supabaseUrl && supabaseAnonKey)
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    })
   : createClient('https://demo.supabase.co', 'demo-key')
 
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
+
+// Test Supabase connection
+export const testSupabaseConnection = async () => {
+  try {
+    const { data, error } = await supabase.from('profiles').select('count').limit(1)
+    if (error) {
+      console.warn('Supabase connection test failed:', error)
+      return false
+    }
+    return true
+  } catch (error) {
+    console.error('Supabase connection test error:', error)
+    return false
+  }
+}
 
 // Database types
 export interface Profile {
@@ -84,16 +105,30 @@ export const trackAnalysis = async (analysisData: {
   analysis_time?: number
   api_provider?: 'sightengine' | 'resemble' | 'demo'
 }) => {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('User not authenticated')
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError) {
+      console.warn('Auth error in trackAnalysis:', authError)
+      return { data: null, error: authError }
+    }
+    
+    if (!user) {
+      console.warn('User not authenticated for tracking analysis')
+      return { data: null, error: new Error('User not authenticated') }
+    }
 
-  const { data, error } = await supabase
-    .from('user_usage')
-    .insert({
-      user_id: user.id,
-      ...analysisData,
-    })
-  return { data, error }
+    const { data, error } = await supabase
+      .from('user_usage')
+      .insert({
+        user_id: user.id,
+        ...analysisData,
+      })
+    return { data, error }
+  } catch (error) {
+    console.error('Error in trackAnalysis:', error)
+    return { data: null, error }
+  }
 }
 
 export const getMonthlyUsage = async () => {
