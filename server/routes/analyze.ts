@@ -283,19 +283,32 @@ async function analyzeVideo(filePath: string): Promise<any> {
     console.log('Sightengine Video API response:', JSON.stringify(data, null, 2));
 
     if (data.status === 'success') {
-      // Extract deepfake score from Sightengine Video API response
-      const deepfakeScore = data.deepfake?.prob || data.type?.deepfake || 0;
+      // Extract deepfake scores from individual frames
+      const frames = Array.isArray(data.data?.frames) ? data.data.frames : [];
       
-      // For videos, use the highest score across all scenes if available
-      const scenes = Array.isArray(data.scenes) ? data.scenes : [];
-      const sceneDeepfakeScores = scenes
-        .map((s: any) => s?.deepfake?.prob ?? s?.type?.deepfake ?? 0)
-        .filter((v: any) => typeof v === 'number');
+      // Get deepfake scores from all frames
+      const frameDeepfakeScores = frames
+        .map((frame: any) => frame?.type?.deepfake ?? 0)
+        .filter((score: any) => typeof score === 'number' && score >= 0);
       
-      const maxSceneDeepfake = sceneDeepfakeScores.length > 0 ? Math.max(...sceneDeepfakeScores) : 0;
+      // Calculate the maximum deepfake score across all frames
+      // This is the correct approach for video analysis
+      const maxFrameDeepfake = frameDeepfakeScores.length > 0 ? Math.max(...frameDeepfakeScores) : 0;
       
-      // Use the highest score from either summary or scenes
-      const finalDeepfakeScore = Math.max(deepfakeScore, maxSceneDeepfake);
+      // Also check for any summary deepfake score if available
+      const summaryDeepfake = data.deepfake?.prob ?? data.type?.deepfake ?? 0;
+      
+      // Use the highest score between frames and summary
+      const finalDeepfakeScore = Math.max(maxFrameDeepfake, summaryDeepfake);
+      
+      // Log detailed analysis for debugging
+      console.log('Video Analysis Details:');
+      console.log('- Total frames analyzed:', frames.length);
+      console.log('- Frame deepfake scores:', frameDeepfakeScores);
+      console.log('- Maximum frame score:', maxFrameDeepfake);
+      console.log('- Summary score:', summaryDeepfake);
+      console.log('- Final score:', finalDeepfakeScore);
+      console.log('- Classification:', finalDeepfakeScore > 0.7 ? 'FAKE' : 'AUTHENTIC');
 
       return {
         status: 'success',
@@ -306,11 +319,18 @@ async function analyzeVideo(filePath: string): Promise<any> {
         metadata: {
           duration: data.media?.duration ?? data.duration ?? 'unknown',
           fps: data.media?.fps ?? data.fps ?? 'unknown',
-          resolution: `${(data.media?.width ?? data.width ?? '?')}x${(data.media?.height ?? data.height ?? '?')}`
+          resolution: `${(data.media?.width ?? data.width ?? '?')}x${(data.media?.height ?? data.height ?? '?')}`,
+          frames_analyzed: frames.length,
+          max_frame_score: maxFrameDeepfake
         },
         raw_response: data,
         detection_details: {
           face_deepfake: finalDeepfakeScore,
+          frame_analysis: {
+            total_frames: frames.length,
+            frame_scores: frameDeepfakeScores,
+            max_score: maxFrameDeepfake
+          }
         }
       };
     } else {
@@ -554,6 +574,7 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             sightengineData: apiResponse,
             metadata: apiResponse.metadata
           };
+          console.log(`Image Analysis Result: Score=${apiResponse.deepfake.prob}, Classification=${analysisResult.isDeepfake ? 'FAKE' : 'AUTHENTIC'}`);
           break;
 
         case 'video':
@@ -566,6 +587,10 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             sightengineData: apiResponse,
             metadata: apiResponse.metadata
           };
+          console.log(`Video Analysis Result: Score=${apiResponse.deepfake.prob}, Classification=${analysisResult.isDeepfake ? 'FAKE' : 'AUTHENTIC'}`);
+          if (apiResponse.detection_details?.frame_analysis) {
+            console.log(`Frame Analysis: ${apiResponse.detection_details.frame_analysis.total_frames} frames, Max Score: ${apiResponse.detection_details.frame_analysis.max_score}`);
+          }
           break;
 
         case 'audio':
@@ -578,6 +603,7 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             resembleData: apiResponse,
             metadata: apiResponse.metadata
           };
+          console.log(`Audio Analysis Result: Score=${apiResponse.confidence}, Classification=${analysisResult.isDeepfake ? 'FAKE' : 'AUTHENTIC'}`);
           break;
 
         default:
