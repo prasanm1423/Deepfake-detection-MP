@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { Shield, Upload, Camera, BarChart3, User, LogOut, Crown, Zap, AlertCircle, CheckCircle } from 'lucide-react'
+import { Shield, Upload, Camera, BarChart3, User, LogOut, Crown, Zap, AlertCircle, CheckCircle, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -215,60 +215,98 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Session Stats */}
-        {results.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <Card className="glass-effect">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Session Analyses</p>
-                    <p className="text-2xl font-bold text-foreground">{getTotalAnalyses()}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                 {/* Session Stats */}
+         {results.length > 0 ? (
+           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+             <Card className="glass-effect">
+               <CardContent className="p-4">
+                 <div className="flex items-center space-x-2">
+                   <BarChart3 className="h-5 w-5 text-primary" />
+                   <div>
+                     <p className="text-sm text-muted-foreground">Session Analyses</p>
+                     <p className="text-2xl font-bold text-foreground">{getTotalAnalyses()}</p>
+                   </div>
+                 </div>
+               </CardContent>
+             </Card>
 
-            <Card className="glass-effect">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-5 w-5 text-success" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Authentic</p>
-                    <p className="text-2xl font-bold text-success">{getAuthenticCount()}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+             <Card className="glass-effect">
+               <CardContent className="p-4">
+                 <div className="flex items-center space-x-2">
+                   <CheckCircle className="h-5 w-5 text-success" />
+                   <div>
+                     <p className="text-sm text-muted-foreground">Authentic</p>
+                     <p className="text-2xl font-bold text-success">{getAuthenticCount()}</p>
+                   </div>
+                 </div>
+               </CardContent>
+             </Card>
 
-            <Card className="glass-effect">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle className="h-5 w-5 text-danger" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Deepfakes</p>
-                    <p className="text-2xl font-bold text-danger">{getDeepfakeCount()}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+             <Card className="glass-effect">
+               <CardContent className="p-4">
+                 <div className="flex items-center space-x-2">
+                   <AlertCircle className="h-5 w-5 text-danger" />
+                   <div>
+                     <p className="text-sm text-muted-foreground">Deepfakes</p>
+                     <p className="text-2xl font-bold text-danger">{getDeepfakeCount()}</p>
+                   </div>
+                 </div>
+               </CardContent>
+             </Card>
 
-            <Card className="glass-effect">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Zap className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Avg. Confidence</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      {(getAverageConfidence() * 100).toFixed(1)}%
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+             <Card className="glass-effect">
+               <CardContent className="p-4">
+                 <div className="flex items-center space-x-2">
+                   <Zap className="h-5 w-5 text-primary" />
+                   <div>
+                     <p className="text-sm text-muted-foreground">Avg. Confidence</p>
+                     <p className="text-2xl font-bold text-foreground">
+                       {(getAverageConfidence() * 100).toFixed(1)}%
+                     </p>
+                   </div>
+                 </div>
+               </CardContent>
+             </Card>
+           </div>
+         ) : (
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+             <Card className="glass-effect">
+               <CardContent className="p-6 text-center">
+                 <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                   <Camera className="h-6 w-6 text-blue-600" />
+                 </div>
+                 <h3 className="font-semibold text-foreground mb-2">Upload Images</h3>
+                 <p className="text-sm text-muted-foreground">
+                   Upload photos to detect face-swap deepfakes and AI-generated content
+                 </p>
+               </CardContent>
+             </Card>
+
+             <Card className="glass-effect">
+               <CardContent className="p-6 text-center">
+                 <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                   <FileText className="h-6 w-6 text-green-600" />
+                 </div>
+                 <h3 className="font-semibold text-foreground mb-2">Analyze Videos</h3>
+                 <p className="text-sm text-muted-foreground">
+                   Check video files for temporal inconsistencies and manipulation
+                 </p>
+               </CardContent>
+             </Card>
+
+             <Card className="glass-effect">
+               <CardContent className="p-6 text-center">
+                 <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                   <Zap className="h-6 w-6 text-purple-600" />
+                 </div>
+                 <h3 className="font-semibold text-foreground mb-2">Audio Detection</h3>
+                 <p className="text-sm text-muted-foreground">
+                   Detect synthetic voices and audio deepfakes with AI analysis
+                 </p>
+               </CardContent>
+             </Card>
+           </div>
+         )}
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -322,101 +360,225 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Current Plan Info */}
-            <Card className="glass-effect mt-6">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="h-5 w-5" />
-                  <span>Current Plan</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between mb-4">
-                  <Badge className={tierInfo.color}>
-                    {tierInfo.icon}
-                    <span className="ml-1">{tierInfo.name} Plan</span>
-                  </Badge>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
-                    Upgrade Plan
-                  </Button>
-                </div>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  {tierInfo.features.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <CheckCircle className="h-4 w-4 text-success mr-2 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+                         {/* Welcome Section - Only show when no results */}
+             {results.length === 0 && (
+               <Card className="glass-effect mt-6">
+                 <CardHeader>
+                   <CardTitle className="flex items-center space-x-2">
+                     <Shield className="h-5 w-5" />
+                     <span>Welcome to DeepGuard</span>
+                   </CardTitle>
+                 </CardHeader>
+                 <CardContent>
+                   <div className="space-y-4">
+                     <p className="text-sm text-muted-foreground">
+                       Start protecting yourself from deepfakes and AI-generated content. 
+                       Upload your first file to begin analysis.
+                     </p>
+                     <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-4 rounded-lg">
+                       <h4 className="font-semibold text-sm mb-2">What we detect:</h4>
+                       <ul className="text-xs text-muted-foreground space-y-1">
+                         <li>• Face-swap deepfakes</li>
+                         <li>• AI-generated images</li>
+                         <li>• Synthetic voice cloning</li>
+                         <li>• Video manipulation</li>
+                       </ul>
+                     </div>
+                   </div>
+                 </CardContent>
+               </Card>
+             )}
+
+             {/* Current Plan Info */}
+             <Card className="glass-effect mt-6">
+               <CardHeader>
+                 <CardTitle className="flex items-center space-x-2">
+                   <User className="h-5 w-5" />
+                   <span>Current Plan</span>
+                 </CardTitle>
+               </CardHeader>
+               <CardContent>
+                 <div className="flex items-center justify-between mb-4">
+                   <Badge className={tierInfo.color}>
+                     {tierInfo.icon}
+                     <span className="ml-1">{tierInfo.name} Plan</span>
+                   </Badge>
+                   <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
+                     Upgrade Plan
+                   </Button>
+                 </div>
+                 <ul className="space-y-2 text-sm text-muted-foreground">
+                   {tierInfo.features.map((feature, index) => (
+                     <li key={index} className="flex items-center">
+                       <CheckCircle className="h-4 w-4 text-success mr-2 flex-shrink-0" />
+                       {feature}
+                     </li>
+                   ))}
+                 </ul>
+               </CardContent>
+             </Card>
           </div>
 
-          {/* Results Sidebar */}
-          <div className="lg:col-span-1">
-            {/* View Results Button */}
-            {results.length > 0 && (
-              <Card className="glass-effect">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <BarChart3 className="h-5 w-5" />
-                    <span>Analysis Results</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary mb-1">{results.length}</div>
-                      <p className="text-sm text-muted-foreground">Analyses Completed</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="text-center p-2 bg-green-100 rounded">
-                        <div className="font-semibold text-green-700">{getAuthenticCount()}</div>
-                        <div className="text-xs text-green-600">Authentic</div>
-                      </div>
-                      <div className="text-center p-2 bg-red-100 rounded">
-                        <div className="font-semibold text-red-700">{getDeepfakeCount()}</div>
-                        <div className="text-xs text-red-600">Deepfakes</div>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      className="w-full" 
-                      onClick={() => navigate('/results', { state: { results } })}
-                    >
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      View Detailed Results
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={clearResults}
-                    >
-                      Clear History
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Analysis Status */}
-            {isAnalyzing && (
-              <Card className="glass-effect mt-4">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="scan-animation w-8 h-1 bg-primary rounded"></div>
-                    <div>
-                      <p className="font-medium text-foreground">Analysis in Progress</p>
-                      <p className="text-sm text-muted-foreground">Processing your media...</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                     {/* Results Sidebar */}
+           <div className="lg:col-span-1">
+             {/* View Results Button */}
+             {results.length > 0 ? (
+               <Card className="glass-effect">
+                 <CardHeader>
+                   <CardTitle className="flex items-center space-x-2">
+                     <BarChart3 className="h-5 w-5" />
+                     <span>Analysis Results</span>
+                   </CardTitle>
+                 </CardHeader>
+                 <CardContent>
+                   <div className="space-y-4">
+                     <div className="text-center">
+                       <div className="text-2xl font-bold text-primary mb-1">{results.length}</div>
+                       <p className="text-sm text-muted-foreground">Analyses Completed</p>
+                     </div>
+                     
+                     <div className="grid grid-cols-2 gap-2 text-sm">
+                       <div className="text-center p-2 bg-green-100 rounded">
+                         <div className="font-semibold text-green-700">{getAuthenticCount()}</div>
+                         <div className="text-xs text-green-600">Authentic</div>
+                       </div>
+                       <div className="text-center p-2 bg-red-100 rounded">
+                         <div className="font-semibold text-red-700">{getDeepfakeCount()}</div>
+                         <div className="text-xs text-red-600">Deepfakes</div>
+                       </div>
+                     </div>
+                     
+                     <Button 
+                       className="w-full" 
+                       onClick={() => navigate('/results', { state: { results } })}
+                     >
+                       <BarChart3 className="h-4 w-4 mr-2" />
+                       View Detailed Results
+                     </Button>
+                     
+                     <Button 
+                       variant="outline" 
+                       size="sm" 
+                       className="w-full"
+                       onClick={clearResults}
+                     >
+                       Clear History
+                     </Button>
+                   </div>
+                 </CardContent>
+               </Card>
+             ) : (
+               <div className="space-y-6">
+                 {/* Quick Start Guide */}
+                 <Card className="glass-effect">
+                   <CardHeader>
+                     <CardTitle className="flex items-center space-x-2">
+                       <Shield className="h-5 w-5" />
+                       <span>Quick Start</span>
+                     </CardTitle>
+                   </CardHeader>
+                   <CardContent>
+                     <div className="space-y-3">
+                       <div className="flex items-start space-x-3">
+                         <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
+                           1
+                         </div>
+                         <div>
+                           <p className="text-sm font-medium">Upload a file</p>
+                           <p className="text-xs text-muted-foreground">Choose an image, video, or audio file</p>
+                         </div>
+                       </div>
+                       <div className="flex items-start space-x-3">
+                         <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
+                           2
+                         </div>
+                         <div>
+                           <p className="text-sm font-medium">AI Analysis</p>
+                           <p className="text-xs text-muted-foreground">Our AI will analyze the content</p>
+                         </div>
+                       </div>
+                       <div className="flex items-start space-x-3">
+                         <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
+                           3
+                         </div>
+                         <div>
+                           <p className="text-sm font-medium">Get Results</p>
+                           <p className="text-xs text-muted-foreground">View detailed analysis report</p>
+                         </div>
+                       </div>
+                     </div>
+                   </CardContent>
+                 </Card>
+
+                 {/* Supported Formats */}
+                 <Card className="glass-effect">
+                   <CardHeader>
+                     <CardTitle className="flex items-center space-x-2">
+                       <FileText className="h-5 w-5" />
+                       <span>Supported Formats</span>
+                     </CardTitle>
+                   </CardHeader>
+                   <CardContent>
+                     <div className="space-y-3">
+                       <div>
+                         <p className="text-sm font-medium text-blue-600">Images</p>
+                         <p className="text-xs text-muted-foreground">JPEG, PNG, WebP (max 10MB)</p>
+                       </div>
+                       <div>
+                         <p className="text-sm font-medium text-green-600">Videos</p>
+                         <p className="text-xs text-muted-foreground">MP4, WebM, MOV (max 10MB)</p>
+                       </div>
+                       <div>
+                         <p className="text-sm font-medium text-purple-600">Audio</p>
+                         <p className="text-xs text-muted-foreground">WAV, MP3, M4A, OGG (max 10MB)</p>
+                       </div>
+                     </div>
+                   </CardContent>
+                 </Card>
+
+                 {/* Tips */}
+                 <Card className="glass-effect">
+                   <CardHeader>
+                     <CardTitle className="flex items-center space-x-2">
+                       <Zap className="h-5 w-5" />
+                       <span>Pro Tips</span>
+                     </CardTitle>
+                   </CardHeader>
+                   <CardContent>
+                     <div className="space-y-2">
+                       <div className="flex items-start space-x-2">
+                         <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                         <p className="text-xs text-muted-foreground">Higher resolution images provide better accuracy</p>
+                       </div>
+                       <div className="flex items-start space-x-2">
+                         <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                         <p className="text-xs text-muted-foreground">Use live camera for real-time analysis</p>
+                       </div>
+                       <div className="flex items-start space-x-2">
+                         <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                         <p className="text-xs text-muted-foreground">Check results page for detailed insights</p>
+                       </div>
+                     </div>
+                   </CardContent>
+                 </Card>
+               </div>
+             )}
+             
+             {/* Analysis Status */}
+             {isAnalyzing && (
+               <Card className="glass-effect mt-4">
+                 <CardContent className="p-4">
+                   <div className="flex items-center space-x-3">
+                     <div className="scan-animation w-8 h-1 bg-primary rounded"></div>
+                     <div>
+                       <p className="font-medium text-foreground">Analysis in Progress</p>
+                       <p className="text-sm text-muted-foreground">Processing your media...</p>
+                     </div>
+                   </div>
+                 </CardContent>
+               </Card>
+             )}
+           </div>
         </div>
       </div>
 
