@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FileUpload } from '@/components/FileUpload'
 import { CameraCapture } from '@/components/CameraCapture'
-import { ResultsDashboard } from '@/components/ResultsDashboard'
+import { AnalysisSuccess } from '@/components/AnalysisSuccess'
 import { AnalysisResult } from '@shared/api'
 import { trackAnalysis, testSupabaseConnection } from '@/lib/supabase'
 
@@ -19,6 +19,8 @@ export default function Dashboard() {
   const { user, profile, monthlyUsage, usageLimit, canAnalyze, signOut, refreshUsage } = useAuth()
   const [results, setResults] = useState<AnalysisResult[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [lastResult, setLastResult] = useState<AnalysisResult | null>(null)
   const [supabaseStatus, setSupabaseStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking')
 
   const usagePercentage = usageLimit === -1 ? 0 : (monthlyUsage / usageLimit) * 100
@@ -78,8 +80,12 @@ export default function Dashboard() {
   }
 
   const handleAnalysisComplete = async (result: AnalysisResult) => {
-    setResults(prev => [result, ...prev])
+    const newResults = [result, ...results]
+    setResults(newResults)
     setIsAnalyzing(false)
+
+    // Save results to localStorage for the results page
+    localStorage.setItem('analysisResults', JSON.stringify(newResults))
 
     // Track the analysis in the database
     try {
@@ -103,6 +109,10 @@ export default function Dashboard() {
       console.warn('Error tracking analysis (non-critical):', error)
       // Don't block the UI - tracking is optional
     }
+
+    // Show success modal
+    setLastResult(result)
+    setShowSuccess(true)
   }
 
   const clearResults = () => {
@@ -135,6 +145,18 @@ export default function Dashboard() {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Results Link */}
+              {results.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/results', { state: { results } })}
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Results ({results.length})
+                </Button>
+              )}
+              
               {/* Connection Status */}
               <Badge 
                 variant={supabaseStatus === 'connected' ? 'default' : 'destructive'}
@@ -332,10 +354,53 @@ export default function Dashboard() {
 
           {/* Results Sidebar */}
           <div className="lg:col-span-1">
-            <ResultsDashboard
-              results={results}
-              onClear={clearResults}
-            />
+            {/* View Results Button */}
+            {results.length > 0 && (
+              <Card className="glass-effect">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <BarChart3 className="h-5 w-5" />
+                    <span>Analysis Results</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary mb-1">{results.length}</div>
+                      <p className="text-sm text-muted-foreground">Analyses Completed</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="text-center p-2 bg-green-100 rounded">
+                        <div className="font-semibold text-green-700">{getAuthenticCount()}</div>
+                        <div className="text-xs text-green-600">Authentic</div>
+                      </div>
+                      <div className="text-center p-2 bg-red-100 rounded">
+                        <div className="font-semibold text-red-700">{getDeepfakeCount()}</div>
+                        <div className="text-xs text-red-600">Deepfakes</div>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      className="w-full" 
+                      onClick={() => navigate('/results', { state: { results } })}
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      View Detailed Results
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={clearResults}
+                    >
+                      Clear History
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             
             {/* Analysis Status */}
             {isAnalyzing && (
@@ -354,6 +419,14 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccess && lastResult && (
+        <AnalysisSuccess 
+          result={lastResult} 
+          onClose={() => setShowSuccess(false)} 
+        />
+      )}
     </div>
   )
 }

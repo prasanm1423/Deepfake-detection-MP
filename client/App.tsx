@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Pricing from "./pages/Pricing";
 import Dashboard from "./pages/Dashboard";
+import AnalysisResults from "./pages/AnalysisResults";
 import NotFound from "./pages/NotFound";
 import SetupGuide from "./components/SetupGuide";
 
@@ -84,6 +85,11 @@ const AppRoutes = () => {
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/results" element={
+        <ProtectedRoute>
+          <AnalysisResults />
         </ProtectedRoute>
       } />
 
