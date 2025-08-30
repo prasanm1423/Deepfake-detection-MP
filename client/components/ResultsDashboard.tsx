@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, AlertTriangle, Clock, Info, Eye, TrendingUp, FileImage, FileVideo, Music } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Clock, Info, Eye, TrendingUp, FileImage, FileVideo, Music, Shield, AlertCircle, CheckSquare, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -63,6 +63,27 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
     return 'text-danger';
   };
 
+  const getRiskLevelColor = (riskLevel: string) => {
+    switch (riskLevel) {
+      case 'CRITICAL': return 'bg-red-600 text-white';
+      case 'HIGH': return 'bg-orange-500 text-white';
+      case 'MEDIUM': return 'bg-yellow-500 text-black';
+      case 'LOW': return 'bg-green-500 text-white';
+      default: return 'bg-gray-500 text-white';
+    }
+  };
+
+  const getConfidenceCategoryColor = (category: string) => {
+    switch (category) {
+      case 'VERY_HIGH': return 'text-green-600';
+      case 'HIGH': return 'text-green-500';
+      case 'MEDIUM': return 'text-yellow-500';
+      case 'LOW': return 'text-orange-500';
+      case 'VERY_LOW': return 'text-red-500';
+      default: return 'text-gray-500';
+    }
+  };
+
   const formatDuration = (ms: number) => {
     return `${(ms / 1000).toFixed(1)}s`;
   };
@@ -88,7 +109,8 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
       </Card>
 
       <div className="space-y-3">
-        {results.map((result, index) => (
+                 {results.map((result, index) => {
+           return (
           <Card key={index} className="glass-effect">
             <CardContent className="p-4">
               <div className="space-y-4">
@@ -103,19 +125,40 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
                           {result.type} Analysis
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {result.isDeepfake ? 'Potential deepfake detected' : 'Appears authentic'}
-                      </p>
+                                             <p className="text-sm text-foreground font-medium">
+                         {result.isDeepfake ? 'Potential deepfake detected' : 'Appears authentic'}
+                       </p>
                     </div>
                   </div>
                   
-                  <Badge
-                    variant={result.isDeepfake ? 'destructive' : 'default'}
-                    className={result.isDeepfake ? '' : 'bg-success text-success-foreground'}
-                  >
-                    {result.isDeepfake ? 'DEEPFAKE' : 'AUTHENTIC'}
-                  </Badge>
+                  <div className="flex flex-col items-end space-y-2">
+                    <Badge
+                      variant={result.isDeepfake ? 'destructive' : 'default'}
+                      className={result.isDeepfake ? '' : 'bg-success text-success-foreground'}
+                    >
+                      {result.isDeepfake ? 'DEEPFAKE' : 'AUTHENTIC'}
+                    </Badge>
+                    
+                                         {/* Enhanced Risk Level Badge */}
+                     {'riskLevel' in result && result.riskLevel && typeof result.riskLevel === 'string' && (
+                       <Badge className={getRiskLevelColor(result.riskLevel)}>
+                         <Shield className="h-3 w-3 mr-1" />
+                         {result.riskLevel} RISK
+                       </Badge>
+                     )}
+                  </div>
                 </div>
+
+                                     {/* Enhanced Analysis Quality */}
+                     {'analysisQuality' in result && result.analysisQuality && typeof result.analysisQuality === 'string' && (
+                       <div className="flex items-center space-x-2 text-sm">
+                         <Info className="h-4 w-4 text-muted-foreground" />
+                         <span className="text-muted-foreground">Analysis Quality:</span>
+                         <Badge variant={result.analysisQuality === 'DEMO' ? 'secondary' : 'default'}>
+                           {result.analysisQuality === 'DEMO' ? 'Demo Mode' : 'API Analysis'}
+                         </Badge>
+                       </div>
+                     )}
 
                 {/* Confidence and Time */}
                 <div className="grid grid-cols-2 gap-4">
@@ -130,6 +173,15 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
                       value={result.confidence * 100}
                       className="h-2"
                     />
+                    
+                                         {/* Enhanced Confidence Category */}
+                     {'confidenceCategory' in result && result.confidenceCategory && typeof result.confidenceCategory === 'string' && (
+                       <div className="text-xs text-center">
+                         <span className={`font-semibold ${getConfidenceCategoryColor(result.confidenceCategory)}`}>
+                           {result.confidenceCategory.replace('_', ' ')}
+                         </span>
+                       </div>
+                     )}
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -142,6 +194,40 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
                     </span>
                   </div>
                 </div>
+
+                                                  {/* Enhanced Recommendations */}
+                 {'recommendations' in result && Array.isArray(result.recommendations) && result.recommendations.length > 0 && (
+                   <div className="space-y-2">
+                     <h4 className="text-sm font-semibold text-foreground flex items-center space-x-2">
+                       <CheckSquare className="h-4 w-4 text-green-500" />
+                       <span>Recommendations</span>
+                     </h4>
+                     <div className="space-y-1">
+                       {result.recommendations.map((rec, recIndex) => (
+                         <div key={recIndex} className="text-xs text-green-900 dark:text-green-100 bg-green-50 dark:bg-green-950/30 p-2 rounded border-l-2 border-green-500 font-medium">
+                           {rec}
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+
+                                                  {/* Enhanced Limitations */}
+                 {'limitations' in result && Array.isArray(result.limitations) && result.limitations.length > 0 && (
+                   <div className="space-y-2">
+                     <h4 className="text-sm font-semibold text-foreground flex items-center space-x-2">
+                       <AlertCircle className="h-4 w-4 text-orange-500" />
+                       <span>Limitations & Notes</span>
+                     </h4>
+                     <div className="space-y-1">
+                       {result.limitations.map((lim, limIndex) => (
+                         <div key={limIndex} className="text-xs text-orange-900 dark:text-orange-100 bg-orange-50 dark:bg-orange-950/30 p-2 rounded border-l-2 border-orange-500 font-medium">
+                           {lim}
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 )}
 
                 {/* Detailed Information */}
                 <Collapsible
@@ -161,6 +247,118 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
                   
                   <CollapsibleContent className="mt-3">
                     <div className="space-y-3 p-3 bg-secondary/10 rounded-lg border">
+                      {/* Enhanced Processing Details */}
+                      {'processingDetails' in result && result.processingDetails && (
+                                                 <div>
+                           <h4 className="text-sm font-semibold text-foreground mb-2">
+                             Processing Information
+                           </h4>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">API Provider:</span>
+                              <span className="text-foreground">{result.processingDetails.apiProvider}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Quality Score:</span>
+                              <span className="text-foreground">{(result.processingDetails.qualityScore * 100).toFixed(0)}%</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Models Used:</span>
+                              <span className="text-foreground">{result.processingDetails.modelsUsed.join(', ')}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Method:</span>
+                              <span className="text-foreground">{result.processingDetails.processingMethod}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Confidence Factors */}
+                          {result.processingDetails.confidenceFactors && result.processingDetails.confidenceFactors.length > 0 && (
+                                                         <div className="mt-3">
+                               <h5 className="text-xs font-semibold text-foreground mb-2">Confidence Factors</h5>
+                              <div className="space-y-1">
+                                {result.processingDetails.confidenceFactors.map((factor, factorIndex) => (
+                                                                   <div key={factorIndex} className="text-xs p-2 bg-background rounded border">
+                                   <div className="flex justify-between items-center mb-1">
+                                     <span className="font-medium text-foreground">{factor.factor}</span>
+                                     <Badge variant={factor.impact === 'POSITIVE' ? 'default' : factor.impact === 'NEGATIVE' ? 'destructive' : 'secondary'}>
+                                       {factor.impact}
+                                     </Badge>
+                                   </div>
+                                   <p className="text-foreground">{factor.description}</p>
+                                   <div className="flex justify-between text-xs mt-1 text-muted-foreground">
+                                     <span>Weight: {(factor.weight * 100).toFixed(0)}%</span>
+                                   </div>
+                                 </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Enhanced Image Analysis */}
+                      {'imageAnalysis' in result && result.imageAnalysis && (
+                        <div>
+                          <h4 className="text-sm font-medium text-foreground mb-2">
+                            Image Analysis Details
+                          </h4>
+                          
+                          {/* Face Detection */}
+                          <div className="mb-3">
+                            <h5 className="text-xs font-medium text-foreground mb-1">Face Detection</h5>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Faces Detected:</span>
+                                <span className="text-foreground">{result.imageAnalysis.faceDetection.facesDetected}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Face Quality:</span>
+                                <span className="text-foreground">{(result.imageAnalysis.faceDetection.faceQuality * 100).toFixed(0)}%</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Manipulation Indicators */}
+                          <div className="mb-3">
+                            <h5 className="text-xs font-medium text-foreground mb-1">Manipulation Indicators</h5>
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Compression Artifacts:</span>
+                                <span className="text-foreground">{(result.imageAnalysis.manipulationIndicators.compressionArtifacts * 100).toFixed(0)}%</span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Editing Signs:</span>
+                                <span className="text-foreground">{(result.imageAnalysis.manipulationIndicators.editingSigns * 100).toFixed(0)}%</span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Metadata Issues:</span>
+                                <span className="text-foreground">{(result.imageAnalysis.manipulationIndicators.metadataInconsistencies * 100).toFixed(0)}%</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Technical Analysis */}
+                          <div>
+                            <h5 className="text-xs font-medium text-foreground mb-1">Technical Details</h5>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Resolution:</span>
+                                <span className="text-foreground">{result.imageAnalysis.technicalAnalysis.resolution}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Color Depth:</span>
+                                <span className="text-foreground">{result.imageAnalysis.technicalAnalysis.colorDepth} bit</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Format:</span>
+                                <span className="text-foreground">{result.imageAnalysis.technicalAnalysis.compressionType}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Metadata */}
                       {result.metadata && (
                         <div>
@@ -182,33 +380,6 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
                         </div>
                       )}
 
-                      {/* API Response Summary */}
-                      <div>
-                        <h4 className="text-sm font-medium text-foreground mb-2">
-                          Analysis Details
-                        </h4>
-                        <div className="text-xs space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">API Provider:</span>
-                            <span className="text-foreground">
-                              {result.type === 'audio' ? 'Resemble Detect' : 'Sightengine'}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Detection Method:</span>
-                            <span className="text-foreground">
-                              {result.type === 'audio' ? 'Voice Synthesis Detection' : 'Visual Manipulation Detection'}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Processed At:</span>
-                            <span className="text-foreground">
-                              {new Date().toLocaleTimeString()}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
                       {/* Raw API Data (for debugging) */}
                       <details className="text-xs">
                         <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
@@ -228,7 +399,8 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
               </div>
             </CardContent>
           </Card>
-        ))}
+        );
+        })}
       </div>
     </div>
   );

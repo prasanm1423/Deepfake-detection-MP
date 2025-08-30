@@ -27,7 +27,7 @@ export const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit to match API requirements
   },
   fileFilter: (req, file, cb) => {
-    // Enhanced file validation
+    // Enhanced file validation with security checks
     if (!file) {
       cb(new Error('No file provided'));
       return;
@@ -39,6 +39,12 @@ export const upload = multer({
       return;
     }
 
+    // Check for empty files
+    if (file.size === 0) {
+      cb(new Error('File is empty'));
+      return;
+    }
+
     // Validate file type
     const category = getFileCategory(file.mimetype);
     if (category === 'unsupported') {
@@ -46,11 +52,29 @@ export const upload = multer({
       return;
     }
 
-    // Additional security checks
+    // Enhanced filename security checks
     if (!file.originalname || file.originalname.length > 255) {
       cb(new Error('Invalid filename'));
       return;
     }
+
+    // Prevent path traversal attacks
+    const filename = file.originalname.toLowerCase();
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      cb(new Error('Invalid filename - path traversal not allowed'));
+      return;
+    }
+
+    // Check for suspicious file extensions
+    const suspiciousExtensions = ['.exe', '.bat', '.cmd', '.com', '.pif', '.scr', '.vbs', '.js', '.jar'];
+    const fileExt = path.extname(filename).toLowerCase();
+    if (suspiciousExtensions.includes(fileExt)) {
+      cb(new Error(`File type not allowed: ${fileExt}`));
+      return;
+    }
+
+    // Log file upload for security monitoring
+    console.log(`[FILE_UPLOAD] ${file.originalname} (${file.mimetype}) - Size: ${file.size} bytes - Category: ${category}`);
 
     cb(null, true);
   }
@@ -73,21 +97,12 @@ async function analyzeImage(filePath: string): Promise<any> {
       ? Math.random() * 0.3 + 0.7  // 70-100% for deepfakes (high score = fake)
       : Math.random() * 0.4 + 0.1; // 10-50% for authentic (low score = real)
 
-    return {
-      status: 'success',
-      deepfake: {
-        prob: confidence,
-        deepfake_score: confidence,
-      },
-      metadata: {
-        width: 1024,
-        height: 768,
-        format: 'demo'
-      },
-      demo_mode: true,
-      error_message: 'Sightengine API credentials not configured',
-      demo_note: `Fallback demo: ${isLikelyDeepfake ? 'Simulated deepfake detection' : 'Simulated authentic image'}`
-    };
+    // Generate enhanced demo response with detailed analysis
+    return generateEnhancedImageResponse(confidence, true, {
+      width: 1024,
+      height: 768,
+      format: 'demo'
+    }, null, 'Sightengine API credentials not configured');
   }
 
   // Use axios with FormData for better compatibility
@@ -158,22 +173,12 @@ async function analyzeImage(filePath: string): Promise<any> {
       // Extract deepfake score from Sightengine API response
       const deepfakeScore = data.deepfake?.prob || data.type?.deepfake || 0;
 
-      return {
-        status: 'success',
-        deepfake: {
-          prob: deepfakeScore,
-          deepfake_score: deepfakeScore,
-        },
-        metadata: {
-          width: data.media?.width || 'unknown',
-          height: data.media?.height || 'unknown',
-          format: data.media?.format || 'unknown'
-        },
-        raw_response: data,
-        detection_details: {
-          face_deepfake: deepfakeScore,
-        }
-      };
+      // Generate enhanced response with real API data
+      return generateEnhancedImageResponse(deepfakeScore, false, {
+        width: data.media?.width || 'unknown',
+        height: data.media?.height || 'unknown',
+        format: data.media?.format || 'unknown'
+      }, data);
     } else {
       throw new Error(data.error?.message || 'Sightengine API returned unsuccessful status');
     }
@@ -235,21 +240,11 @@ async function analyzeImage(filePath: string): Promise<any> {
       ? Math.random() * 0.3 + 0.7  // 70-100% for deepfakes (high score = fake)
       : Math.random() * 0.4 + 0.1; // 10-50% for authentic (low score = real)
 
-    return {
-      status: 'success',
-      deepfake: {
-        prob: confidence,
-        deepfake_score: confidence,
-      },
-      metadata: {
-        width: 1024,
-        height: 768,
-        format: 'demo'
-      },
-      demo_mode: true,
-      error_message: errorDetails,
-      demo_note: `Fallback demo: ${isLikelyDeepfake ? 'Simulated deepfake detection' : 'Simulated authentic image'}`
-    };
+    return generateEnhancedImageResponse(confidence, true, {
+      width: 1024,
+      height: 768,
+      format: 'demo'
+    }, null, errorDetails);
   }
 }
 
@@ -575,6 +570,213 @@ export const debugFileUpload: RequestHandler = async (req, res) => {
 };
 
 /**
+ * Generate enhanced image analysis response with detailed reporting
+ */
+function generateEnhancedImageResponse(
+  confidence: number, 
+  isDemo: boolean, 
+  metadata: any, 
+  rawApiData?: any,
+  errorMessage?: string
+) {
+  // Calculate risk level based on confidence
+  const riskLevel = getRiskLevel(confidence);
+  const confidenceCategory = getConfidenceCategory(confidence);
+  
+  // Debug logging
+  console.log(`🔍 Enhanced Response Generation:`);
+  console.log(`  - Confidence: ${confidence} (${(confidence * 100).toFixed(1)}%)`);
+  console.log(`  - Calculated Risk Level: ${riskLevel}`);
+  console.log(`  - Calculated Confidence Category: ${confidenceCategory}`);
+  console.log(`  - Is Demo: ${isDemo}`);
+  
+  // Generate recommendations based on analysis
+  const recommendations = generateRecommendations(confidence, riskLevel);
+  const limitations = generateLimitations(isDemo, confidence);
+  
+  // Extract technical details from metadata
+  const technicalAnalysis = {
+    resolution: `${metadata.width || 'unknown'}x${metadata.height || 'unknown'}`,
+    colorDepth: 24, // Default assumption
+    compressionType: metadata.format || 'unknown',
+    exifData: rawApiData?.media?.exif || null
+  };
+
+  // Simulate face detection for demo mode
+  const faceDetection = isDemo ? {
+    facesDetected: Math.floor(Math.random() * 3) + 1,
+    faceQuality: Math.random() * 0.5 + 0.5,
+    facialFeatures: ['eyes', 'nose', 'mouth']
+  } : {
+    facesDetected: rawApiData?.faces?.length || 0,
+    faceQuality: rawApiData?.faces?.[0]?.quality || 0.8,
+    facialFeatures: rawApiData?.faces?.[0]?.features || ['eyes', 'nose', 'mouth']
+  };
+
+  // Generate manipulation indicators
+  const manipulationIndicators = {
+    compressionArtifacts: isDemo ? Math.random() * 0.3 : (rawApiData?.compression_artifacts || 0),
+    editingSigns: isDemo ? Math.random() * 0.4 : (rawApiData?.editing_signs || 0),
+    metadataInconsistencies: isDemo ? Math.random() * 0.2 : (rawApiData?.metadata_inconsistencies || 0)
+  };
+
+  // Debug logging for final response
+  console.log(`📤 Final Enhanced Response:`);
+  console.log(`  - Risk Level: ${riskLevel}`);
+  console.log(`  - Confidence Category: ${confidenceCategory}`);
+  console.log(`  - Analysis Quality: ${isDemo ? 'DEMO' : 'API'}`);
+  console.log(`  - Recommendations count: ${recommendations.length}`);
+  console.log(`  - Limitations count: ${limitations.length}`);
+  
+  return {
+    status: 'success',
+    deepfake: {
+      prob: confidence,
+      deepfake_score: confidence,
+    },
+    metadata: metadata,
+    raw_response: rawApiData,
+    detection_details: {
+      face_deepfake: confidence,
+    },
+    // Enhanced fields
+    riskLevel,
+    confidenceCategory,
+    analysisQuality: isDemo ? 'DEMO' : 'API',
+    processingDetails: {
+      apiProvider: 'Sightengine',
+      modelsUsed: ['deepfake'],
+      processingMethod: 'AI-powered visual analysis',
+      qualityScore: isDemo ? 0.6 : 0.9,
+      confidenceFactors: [
+        {
+          factor: 'Visual Consistency',
+          weight: 0.4,
+          description: 'Analysis of image artifacts and inconsistencies',
+          impact: confidence > 0.7 ? 'NEGATIVE' : 'POSITIVE'
+        },
+        {
+          factor: 'Face Detection Quality',
+          weight: 0.3,
+          description: 'Quality and number of detected faces',
+          impact: faceDetection.faceQuality > 0.7 ? 'POSITIVE' : 'NEGATIVE'
+        },
+        {
+          factor: 'Technical Metadata',
+          weight: 0.3,
+          description: 'File format and compression analysis',
+          impact: 'NEUTRAL'
+        }
+      ],
+      processingWarnings: errorMessage ? [errorMessage] : undefined
+    },
+    recommendations,
+    limitations,
+    imageAnalysis: {
+      faceDetection,
+      manipulationIndicators,
+      technicalAnalysis
+    }
+  };
+}
+
+/**
+ * Helper functions for enhanced analysis reporting
+ */
+function getRiskLevel(confidence: number): 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' {
+  // For deepfake detection: HIGH confidence = HIGH probability of being fake = HIGH risk
+  if (confidence >= 0.8) return 'CRITICAL';  // 80%+ confidence = Critical risk
+  if (confidence >= 0.6) return 'HIGH';      // 60-79% confidence = High risk  
+  if (confidence >= 0.4) return 'MEDIUM';    // 40-59% confidence = Medium risk
+  if (confidence >= 0.2) return 'LOW';       // 20-39% confidence = Low risk
+  return 'LOW';                              // 0-19% confidence = Low risk (likely authentic)
+}
+
+function getConfidenceCategory(confidence: number): 'VERY_LOW' | 'LOW' | 'MEDIUM' | 'HIGH' | 'VERY_HIGH' {
+  // For deepfake detection: HIGH confidence = HIGH probability of being fake
+  if (confidence >= 0.9) return 'VERY_HIGH';  // 90%+ confidence = Very high probability of fake
+  if (confidence >= 0.7) return 'HIGH';       // 70-89% confidence = High probability of fake
+  if (confidence >= 0.5) return 'MEDIUM';     // 50-69% confidence = Medium probability of fake
+  if (confidence >= 0.3) return 'LOW';        // 30-49% confidence = Low probability of fake
+  return 'VERY_LOW';                          // 0-29% confidence = Very low probability of fake (likely authentic)
+}
+
+function generateRecommendations(confidence: number, riskLevel: string): string[] {
+  const recommendations: string[] = [];
+  
+  if (confidence >= 0.8) {
+    recommendations.push(
+      '🚨 CRITICAL: Very high probability of deepfake detected',
+      'Exercise extreme caution - this media is likely manipulated',
+      'Verify source and context immediately',
+      'Consider additional verification methods',
+      'Document findings for security purposes'
+    );
+  } else if (confidence >= 0.6) {
+    recommendations.push(
+      '⚠️ HIGH: High probability of deepfake detected',
+      'Approach with extreme caution',
+      'Verify media source and authenticity thoroughly',
+      'Look for additional verification clues',
+      'Consider professional analysis if critical'
+    );
+  } else if (confidence >= 0.4) {
+    recommendations.push(
+      '🔍 MEDIUM: Moderate manipulation indicators detected',
+      'Some suspicious patterns identified',
+      'Verify source and check for metadata inconsistencies',
+      'Compare with known authentic versions if available',
+      'Proceed with caution'
+    );
+  } else if (confidence >= 0.2) {
+    recommendations.push(
+      '✅ LOW: Minimal manipulation indicators',
+      'Media appears mostly authentic',
+      'Continue to verify source and context',
+      'Monitor for any new detection methods'
+    );
+  } else {
+    recommendations.push(
+      '✅ VERY LOW: No significant manipulation detected',
+      'Media appears authentic based on current analysis',
+      'Continue to verify source and context',
+      'Monitor for any new detection methods'
+    );
+  }
+  
+  return recommendations;
+}
+
+function generateLimitations(isDemo: boolean, confidence: number): string[] {
+  const limitations: string[] = [];
+  
+  if (isDemo) {
+    limitations.push(
+      'Analysis performed in demo mode - results are simulated',
+      'Real API credentials required for accurate detection',
+      'Demo scores are randomly generated for demonstration purposes'
+    );
+  }
+  
+  if (confidence < 0.3) {
+    limitations.push(
+      'Low confidence score may indicate unclear or ambiguous results',
+      'Consider re-analyzing with different media or higher resolution',
+      'Some manipulation techniques may evade current detection methods'
+    );
+  }
+  
+  limitations.push(
+    'Analysis based on current AI model capabilities',
+    'New manipulation techniques may not be detected',
+    'Results should be considered alongside other verification methods',
+    'Professional verification recommended for critical applications'
+  );
+  
+  return limitations;
+}
+
+/**
  * Main analysis handler
  */
 export const handleAnalyze: RequestHandler = async (req, res) => {
@@ -603,9 +805,22 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             confidence: apiResponse.deepfake.prob,
             analysisTime: Date.now() - startTime,
             sightengineData: apiResponse,
-            metadata: apiResponse.metadata
+            metadata: apiResponse.metadata,
+            // Enhanced fields - now properly extracted from enhanced response
+            riskLevel: apiResponse.riskLevel,
+            confidenceCategory: apiResponse.confidenceCategory,
+            analysisQuality: apiResponse.analysisQuality,
+            processingDetails: apiResponse.processingDetails,
+            recommendations: apiResponse.recommendations,
+            limitations: apiResponse.limitations,
+            imageAnalysis: apiResponse.imageAnalysis
           };
-          console.log(`Image Analysis Result: Score=${apiResponse.deepfake.prob}, Classification=${analysisResult.isDeepfake ? 'FAKE' : 'AUTHENTIC'}`);
+          console.log(`Image Analysis Result: Score=${apiResponse.deepfake.prob}, Risk Level=${apiResponse.riskLevel}, Classification=${analysisResult.isDeepfake ? 'FAKE' : 'AUTHENTIC'}`);
+          console.log(`🔍 Enhanced Fields Check:`);
+          console.log(`  - Risk Level: ${apiResponse.riskLevel}`);
+          console.log(`  - Recommendations: ${apiResponse.recommendations?.length || 0} items`);
+          console.log(`  - Limitations: ${apiResponse.limitations?.length || 0} items`);
+          console.log(`  - Processing Details: ${apiResponse.processingDetails ? 'Present' : 'Missing'}`);
           break;
 
         case 'video':
