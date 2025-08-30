@@ -265,21 +265,11 @@ async function analyzeVideo(filePath: string): Promise<any> {
       ? Math.random() * 0.3 + 0.7  // 70-100% for deepfakes (high score = fake)
       : Math.random() * 0.4 + 0.1; // 10-50% for authentic (low score = real)
 
-    return {
-      status: 'success',
-      deepfake: {
-        prob: confidence,
-        deepfake_score: confidence,
-      },
-      metadata: {
-        duration: 15.6,
-        fps: 30,
-        resolution: '1920x1080'
-      },
-      demo_mode: true,
-      error_message: 'Sightengine API credentials not configured',
-      demo_note: `Fallback demo: ${isLikelyDeepfake ? 'Simulated deepfake detection' : 'Simulated authentic video'}`
-    };
+    return generateEnhancedVideoResponse(confidence, true, {
+      duration: 15.6,
+      fps: 30,
+      resolution: '1920x1080'
+    }, null, 'Sightengine API credentials not configured');
   }
 
   const form = new FormData();
@@ -336,20 +326,14 @@ async function analyzeVideo(filePath: string): Promise<any> {
       console.log('- Final score:', finalDeepfakeScore);
       console.log('- Classification:', finalDeepfakeScore > 0.7 ? 'FAKE' : 'AUTHENTIC');
 
-      return {
-        status: 'success',
-        deepfake: {
-          prob: finalDeepfakeScore,
-          deepfake_score: finalDeepfakeScore,
-        },
-        metadata: {
-          duration: data.media?.duration ?? data.duration ?? 'unknown',
-          fps: data.media?.fps ?? data.fps ?? 'unknown',
-          resolution: `${(data.media?.width ?? data.width ?? '?')}x${(data.media?.height ?? data.height ?? '?')}`,
-          frames_analyzed: frames.length,
-          max_frame_score: maxFrameDeepfake
-        },
-        raw_response: data,
+      return generateEnhancedVideoResponse(finalDeepfakeScore, false, {
+        duration: data.media?.duration ?? data.duration ?? 'unknown',
+        fps: data.media?.fps ?? data.fps ?? 'unknown',
+        resolution: `${(data.media?.width ?? data.width ?? '?')}x${(data.media?.height ?? data.height ?? '?')}`,
+        frames_analyzed: frames.length,
+        max_frame_score: maxFrameDeepfake
+      }, {
+        ...data,
         detection_details: {
           face_deepfake: finalDeepfakeScore,
           frame_analysis: {
@@ -358,7 +342,7 @@ async function analyzeVideo(filePath: string): Promise<any> {
             max_score: maxFrameDeepfake
           }
         }
-      };
+      });
     } else {
       throw new Error(data.error?.message || 'Sightengine Video API returned unsuccessful status');
     }
@@ -379,20 +363,11 @@ async function analyzeVideo(filePath: string): Promise<any> {
       ? Math.random() * 0.25 + 0.05  // 5-30% for deepfakes (low score = fake)
       : Math.random() * 0.35 + 0.65; // 65-100% for authentic (high score = real)
 
-    return {
-      status: 'success',
-      deepfake: {
-        prob: confidence,
-      },
-      metadata: {
-        duration: 15.6,
-        fps: 30,
-        resolution: '1920x1080'
-      },
-      demo_mode: true,
-      error_message: error instanceof Error ? error.message : 'Video API call failed',
-      demo_note: `Fallback demo: ${isLikelyDeepfake ? 'Simulated deepfake detection' : 'Simulated authentic video'}`
-    };
+    return generateEnhancedVideoResponse(confidence, true, {
+      duration: 15.6,
+      fps: 30,
+      resolution: '1920x1080'
+    }, null, error instanceof Error ? error.message : 'Video API call failed');
   }
 }
 
@@ -415,18 +390,11 @@ async function analyzeAudio(filePath: string): Promise<any> {
         confidence = Math.random() * 0.2 + 0.75;
       }
 
-      resolve({
-        status: 'success',
-        is_synthetic: isSynthetic,
-        confidence: confidence,
-        metadata: {
-          duration: 8.5,
-          sample_rate: 44100,
-          channels: 2
-        },
-        demo_mode: true,
-        demo_note: `Demo mode: ${isSynthetic ? 'Simulated synthetic voice detection' : 'Simulated authentic voice'}`
-      });
+      resolve(generateEnhancedAudioResponse(confidence, isSynthetic, true, {
+        duration: 8.5,
+        sample_rate: 44100,
+        channels: 2
+      }));
     }, 2000);
   });
 }
@@ -584,7 +552,7 @@ function generateEnhancedImageResponse(
   const confidenceCategory = getConfidenceCategory(confidence);
   
   // Debug logging
-  console.log(`🔍 Enhanced Response Generation:`);
+  console.log(`🔍 Enhanced Image Response Generation:`);
   console.log(`  - Confidence: ${confidence} (${(confidence * 100).toFixed(1)}%)`);
   console.log(`  - Calculated Risk Level: ${riskLevel}`);
   console.log(`  - Calculated Confidence Category: ${confidenceCategory}`);
@@ -621,7 +589,7 @@ function generateEnhancedImageResponse(
   };
 
   // Debug logging for final response
-  console.log(`📤 Final Enhanced Response:`);
+  console.log(`📤 Final Enhanced Image Response:`);
   console.log(`  - Risk Level: ${riskLevel}`);
   console.log(`  - Confidence Category: ${confidenceCategory}`);
   console.log(`  - Analysis Quality: ${isDemo ? 'DEMO' : 'API'}`);
@@ -677,6 +645,243 @@ function generateEnhancedImageResponse(
       manipulationIndicators,
       technicalAnalysis
     }
+  };
+}
+
+/**
+ * Generate enhanced video analysis response with detailed reporting
+ */
+function generateEnhancedVideoResponse(
+  confidence: number, 
+  isDemo: boolean, 
+  metadata: any, 
+  rawApiData?: any,
+  errorMessage?: string
+) {
+  // Calculate risk level based on confidence
+  const riskLevel = getRiskLevel(confidence);
+  const confidenceCategory = getConfidenceCategory(confidence);
+  
+  // Debug logging
+  console.log(`🔍 Enhanced Video Response Generation:`);
+  console.log(`  - Confidence: ${confidence} (${(confidence * 100).toFixed(1)}%)`);
+  console.log(`  - Calculated Risk Level: ${riskLevel}`);
+  console.log(`  - Calculated Confidence Category: ${confidenceCategory}`);
+  console.log(`  - Is Demo: ${isDemo}`);
+  
+  // Generate recommendations based on analysis
+  const recommendations = generateRecommendations(confidence, riskLevel);
+  const limitations = generateLimitations(isDemo, confidence);
+  
+  // Extract technical details from metadata
+  const technicalAnalysis = {
+    resolution: metadata.resolution || 'unknown',
+    duration: metadata.duration || 'unknown',
+    fps: metadata.fps || 'unknown',
+    framesAnalyzed: metadata.frames_analyzed || 0,
+    maxFrameScore: metadata.max_frame_score || 0
+  };
+
+  // Simulate frame analysis for demo mode
+  const frameAnalysis = isDemo ? {
+    totalFrames: Math.floor(Math.random() * 30) + 10,
+    frameScores: Array.from({length: 5}, () => Math.random() * 0.8),
+    maxScore: Math.random() * 0.8,
+    averageScore: Math.random() * 0.6
+  } : {
+    totalFrames: rawApiData?.detection_details?.frame_analysis?.total_frames || 0,
+    frameScores: rawApiData?.detection_details?.frame_analysis?.frame_scores || [],
+    maxScore: rawApiData?.detection_details?.frame_analysis?.max_score || 0,
+    averageScore: rawApiData?.detection_details?.frame_analysis?.frame_scores?.length > 0 
+      ? rawApiData.detection_details.frame_analysis.frame_scores.reduce((a: number, b: number) => a + b, 0) / rawApiData.detection_details.frame_analysis.frame_scores.length 
+      : 0
+  };
+
+  // Generate manipulation indicators for video
+  const manipulationIndicators = {
+    temporalInconsistencies: isDemo ? Math.random() * 0.4 : (rawApiData?.temporal_artifacts || 0),
+    frameEditingSigns: isDemo ? Math.random() * 0.3 : (rawApiData?.frame_editing || 0),
+    compressionArtifacts: isDemo ? Math.random() * 0.3 : (rawApiData?.compression_artifacts || 0),
+    audioVideoSync: isDemo ? Math.random() * 0.2 : (rawApiData?.av_sync || 0)
+  };
+
+  // Debug logging for final response
+  console.log(`📤 Final Enhanced Video Response:`);
+  console.log(`  - Risk Level: ${riskLevel}`);
+  console.log(`  - Confidence Category: ${confidenceCategory}`);
+  console.log(`  - Analysis Quality: ${isDemo ? 'DEMO' : 'API'}`);
+  console.log(`  - Recommendations count: ${recommendations.length}`);
+  console.log(`  - Limitations count: ${limitations.length}`);
+  
+  return {
+    status: 'success',
+    deepfake: {
+      prob: confidence,
+      deepfake_score: confidence,
+    },
+    metadata: metadata,
+    raw_response: rawApiData,
+    detection_details: {
+      face_deepfake: confidence,
+      frame_analysis: frameAnalysis
+    },
+    // Enhanced fields
+    riskLevel,
+    confidenceCategory,
+    analysisQuality: isDemo ? 'DEMO' : 'API',
+    processingDetails: {
+      apiProvider: 'Sightengine',
+      modelsUsed: ['deepfake'],
+      processingMethod: 'AI-powered video frame analysis',
+      qualityScore: isDemo ? 0.6 : 0.9,
+      confidenceFactors: [
+        {
+          factor: 'Frame Consistency',
+          weight: 0.4,
+          description: 'Analysis of temporal consistency across video frames',
+          impact: confidence > 0.7 ? 'NEGATIVE' : 'POSITIVE'
+        },
+        {
+          factor: 'Frame Analysis Coverage',
+          weight: 0.3,
+          description: 'Number and quality of analyzed frames',
+          impact: frameAnalysis.totalFrames > 20 ? 'POSITIVE' : 'NEGATIVE'
+        },
+        {
+          factor: 'Temporal Artifacts',
+          weight: 0.3,
+          description: 'Detection of time-based manipulation indicators',
+          impact: 'NEUTRAL'
+        }
+      ],
+      processingWarnings: errorMessage ? [errorMessage] : undefined
+    },
+    recommendations,
+    limitations,
+    videoAnalysis: {
+      frameAnalysis,
+      manipulationIndicators,
+      technicalAnalysis
+    }
+  };
+}
+
+/**
+ * Generate enhanced audio analysis response with detailed reporting
+ */
+function generateEnhancedAudioResponse(
+  confidence: number, 
+  isDeepfake: boolean,
+  isDemo: boolean, 
+  metadata: any, 
+  rawApiData?: any,
+  errorMessage?: string
+) {
+  // Calculate risk level based on confidence
+  const riskLevel = getRiskLevel(confidence);
+  const confidenceCategory = getConfidenceCategory(confidence);
+  
+  // Debug logging
+  console.log(`🔍 Enhanced Audio Response Generation:`);
+  console.log(`  - Confidence: ${confidence} (${(confidence * 100).toFixed(1)}%)`);
+  console.log(`  - Is Deepfake: ${isDeepfake}`);
+  console.log(`  - Calculated Risk Level: ${riskLevel}`);
+  console.log(`  - Calculated Confidence Category: ${confidenceCategory}`);
+  console.log(`  - Is Demo: ${isDemo}`);
+  
+  // Generate recommendations based on analysis
+  const recommendations = generateRecommendations(confidence, riskLevel);
+  const limitations = generateLimitations(isDemo, confidence);
+  
+  // Extract technical details from metadata
+  const technicalAnalysis = {
+    duration: metadata.duration || 'unknown',
+    sampleRate: metadata.sample_rate || 'unknown',
+    channels: metadata.channels || 'unknown',
+    bitrate: metadata.bitrate || 'unknown'
+  };
+
+  // Simulate audio analysis for demo mode
+  const audioAnalysis = isDemo ? {
+    voiceCharacteristics: {
+      naturalness: Math.random() * 0.5 + 0.3,
+      consistency: Math.random() * 0.4 + 0.4,
+      backgroundNoise: Math.random() * 0.3
+    },
+    syntheticIndicators: {
+      artificialPatterns: Math.random() * 0.6,
+      frequencyAnomalies: Math.random() * 0.5,
+      temporalInconsistencies: Math.random() * 0.4
+    },
+    qualityMetrics: {
+      clarity: Math.random() * 0.5 + 0.4,
+      stability: Math.random() * 0.6 + 0.3
+    }
+  } : {
+    voiceCharacteristics: {
+      naturalness: rawApiData?.voice_characteristics?.naturalness || 0.7,
+      consistency: rawApiData?.voice_characteristics?.consistency || 0.8,
+      backgroundNoise: rawApiData?.voice_characteristics?.background_noise || 0.2
+    },
+    syntheticIndicators: {
+      artificialPatterns: rawApiData?.synthetic_indicators?.artificial_patterns || 0.3,
+      frequencyAnomalies: rawApiData?.synthetic_indicators?.frequency_anomalies || 0.2,
+      temporalInconsistencies: rawApiData?.synthetic_indicators?.temporal_inconsistencies || 0.3
+    },
+    qualityMetrics: {
+      clarity: rawApiData?.quality_metrics?.clarity || 0.8,
+      stability: rawApiData?.quality_metrics?.stability || 0.7
+    }
+  };
+
+  // Debug logging for final response
+  console.log(`📤 Final Enhanced Audio Response:`);
+  console.log(`  - Risk Level: ${riskLevel}`);
+  console.log(`  - Confidence Category: ${confidenceCategory}`);
+  console.log(`  - Analysis Quality: ${isDemo ? 'DEMO' : 'API'}`);
+  console.log(`  - Recommendations count: ${recommendations.length}`);
+  console.log(`  - Limitations count: ${limitations.length}`);
+  
+  return {
+    status: 'success',
+    is_synthetic: isDeepfake,
+    confidence: confidence,
+    metadata: metadata,
+    raw_response: rawApiData,
+    // Enhanced fields
+    riskLevel,
+    confidenceCategory,
+    analysisQuality: isDemo ? 'DEMO' : 'API',
+    processingDetails: {
+      apiProvider: 'Resemble AI',
+      modelsUsed: ['voice_synthesis_detection'],
+      processingMethod: 'AI-powered audio pattern analysis',
+      qualityScore: isDemo ? 0.6 : 0.9,
+      confidenceFactors: [
+        {
+          factor: 'Voice Naturalness',
+          weight: 0.4,
+          description: 'Analysis of voice characteristics and natural patterns',
+          impact: audioAnalysis.voiceCharacteristics.naturalness > 0.7 ? 'POSITIVE' : 'NEGATIVE'
+        },
+        {
+          factor: 'Synthetic Indicators',
+          weight: 0.4,
+          description: 'Detection of artificial voice synthesis patterns',
+          impact: audioAnalysis.syntheticIndicators.artificialPatterns > 0.5 ? 'NEGATIVE' : 'POSITIVE'
+        },
+        {
+          factor: 'Audio Quality',
+          weight: 0.2,
+          description: 'Overall audio clarity and stability metrics',
+          impact: 'NEUTRAL'
+        }
+      ],
+      processingWarnings: errorMessage ? [errorMessage] : undefined
+    },
+    recommendations,
+    limitations,
+    audioAnalysis
   };
 }
 
@@ -831,9 +1036,22 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             confidence: apiResponse.deepfake.prob,
             analysisTime: Date.now() - startTime,
             sightengineData: apiResponse,
-            metadata: apiResponse.metadata
+            metadata: apiResponse.metadata,
+            // Enhanced fields - now properly extracted from enhanced response
+            riskLevel: apiResponse.riskLevel,
+            confidenceCategory: apiResponse.confidenceCategory,
+            analysisQuality: apiResponse.analysisQuality,
+            processingDetails: apiResponse.processingDetails,
+            recommendations: apiResponse.recommendations,
+            limitations: apiResponse.limitations,
+            videoAnalysis: apiResponse.videoAnalysis
           };
-          console.log(`Video Analysis Result: Score=${apiResponse.deepfake.prob}, Classification=${analysisResult.isDeepfake ? 'FAKE' : 'AUTHENTIC'}`);
+          console.log(`Video Analysis Result: Score=${apiResponse.deepfake.prob}, Risk Level=${apiResponse.riskLevel}, Classification=${analysisResult.isDeepfake ? 'FAKE' : 'AUTHENTIC'}`);
+          console.log(`🔍 Enhanced Video Fields Check:`);
+          console.log(`  - Risk Level: ${apiResponse.riskLevel}`);
+          console.log(`  - Recommendations: ${apiResponse.recommendations?.length || 0} items`);
+          console.log(`  - Limitations: ${apiResponse.limitations?.length || 0} items}`);
+          console.log(`  - Processing Details: ${apiResponse.processingDetails ? 'Present' : 'Missing'}`);
           if (apiResponse.detection_details?.frame_analysis) {
             console.log(`Frame Analysis: ${apiResponse.detection_details.frame_analysis.total_frames} frames, Max Score: ${apiResponse.detection_details.frame_analysis.max_score}`);
           }
@@ -847,9 +1065,22 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             confidence: apiResponse.confidence,
             analysisTime: Date.now() - startTime,
             resembleData: apiResponse,
-            metadata: apiResponse.metadata
+            metadata: apiResponse.metadata,
+            // Enhanced fields - now properly extracted from enhanced response
+            riskLevel: apiResponse.riskLevel,
+            confidenceCategory: apiResponse.confidenceCategory,
+            analysisQuality: apiResponse.analysisQuality,
+            processingDetails: apiResponse.processingDetails,
+            recommendations: apiResponse.recommendations,
+            limitations: apiResponse.limitations,
+            audioAnalysis: apiResponse.audioAnalysis
           };
-          console.log(`Audio Analysis Result: Score=${apiResponse.confidence}, Classification=${analysisResult.isDeepfake ? 'FAKE' : 'AUTHENTIC'}`);
+          console.log(`Audio Analysis Result: Score=${apiResponse.confidence}, Risk Level=${apiResponse.riskLevel}, Classification=${analysisResult.isDeepfake ? 'FAKE' : 'AUTHENTIC'}`);
+          console.log(`🔍 Enhanced Audio Fields Check:`);
+          console.log(`  - Risk Level: ${apiResponse.riskLevel}`);
+          console.log(`  - Recommendations: ${apiResponse.recommendations?.length || 0} items`);
+          console.log(`  - Limitations: ${apiResponse.limitations?.length || 0} items`);
+          console.log(`  - Processing Details: ${apiResponse.processingDetails ? 'Present' : 'Missing'}`);
           break;
 
         default:

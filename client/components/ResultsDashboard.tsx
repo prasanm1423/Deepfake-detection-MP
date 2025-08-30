@@ -297,67 +297,203 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
                         </div>
                       )}
 
-                      {/* Enhanced Image Analysis */}
-                      {'imageAnalysis' in result && result.imageAnalysis && (
-                        <div>
-                          <h4 className="text-sm font-medium text-foreground mb-2">
-                            Image Analysis Details
-                          </h4>
-                          
-                          {/* Face Detection */}
-                          <div className="mb-3">
-                            <h5 className="text-xs font-medium text-foreground mb-1">Face Detection</h5>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Faces Detected:</span>
-                                <span className="text-foreground">{result.imageAnalysis.faceDetection.facesDetected}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Face Quality:</span>
-                                <span className="text-foreground">{(result.imageAnalysis.faceDetection.faceQuality * 100).toFixed(0)}%</span>
-                              </div>
-                            </div>
-                          </div>
+                                             {/* Enhanced Image Analysis */}
+                       {'imageAnalysis' in result && result.imageAnalysis && (
+                         <div>
+                           <h4 className="text-sm font-medium text-foreground mb-2">
+                             Image Analysis Details
+                           </h4>
+                           
+                           {/* Face Detection */}
+                           <div className="mb-3">
+                             <h5 className="text-xs font-medium text-foreground mb-1">Face Detection</h5>
+                             <div className="grid grid-cols-2 gap-2 text-xs">
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Faces Detected:</span>
+                                 <span className="text-foreground">{result.imageAnalysis.faceDetection.facesDetected}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Face Quality:</span>
+                                 <span className="text-foreground">{(result.imageAnalysis.faceDetection.faceQuality * 100).toFixed(0)}%</span>
+                               </div>
+                             </div>
+                           </div>
 
-                          {/* Manipulation Indicators */}
-                          <div className="mb-3">
-                            <h5 className="text-xs font-medium text-foreground mb-1">Manipulation Indicators</h5>
-                            <div className="space-y-1">
-                              <div className="flex justify-between text-xs">
-                                <span className="text-muted-foreground">Compression Artifacts:</span>
-                                <span className="text-foreground">{(result.imageAnalysis.manipulationIndicators.compressionArtifacts * 100).toFixed(0)}%</span>
-                              </div>
-                              <div className="flex justify-between text-xs">
-                                <span className="text-muted-foreground">Editing Signs:</span>
-                                <span className="text-foreground">{(result.imageAnalysis.manipulationIndicators.editingSigns * 100).toFixed(0)}%</span>
-                              </div>
-                              <div className="flex justify-between text-xs">
-                                <span className="text-muted-foreground">Metadata Issues:</span>
-                                <span className="text-foreground">{(result.imageAnalysis.manipulationIndicators.metadataInconsistencies * 100).toFixed(0)}%</span>
-                              </div>
-                            </div>
-                          </div>
+                           {/* Manipulation Indicators */}
+                           <div className="mb-3">
+                             <h5 className="text-xs font-medium text-foreground mb-1">Manipulation Indicators</h5>
+                             <div className="space-y-1">
+                               <div className="flex justify-between text-xs">
+                                 <span className="text-muted-foreground">Compression Artifacts:</span>
+                                 <span className="text-foreground">{(result.imageAnalysis.manipulationIndicators.compressionArtifacts * 100).toFixed(0)}%</span>
+                               </div>
+                               <div className="flex justify-between text-xs">
+                                 <span className="text-muted-foreground">Editing Signs:</span>
+                                 <span className="text-foreground">{(result.imageAnalysis.manipulationIndicators.editingSigns * 100).toFixed(0)}%</span>
+                               </div>
+                               <div className="flex justify-between text-xs">
+                                 <span className="text-muted-foreground">Metadata Issues:</span>
+                                 <span className="text-foreground">{(result.imageAnalysis.manipulationIndicators.metadataInconsistencies * 100).toFixed(0)}%</span>
+                               </div>
+                             </div>
+                           </div>
 
-                          {/* Technical Analysis */}
-                          <div>
-                            <h5 className="text-xs font-medium text-foreground mb-1">Technical Details</h5>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Resolution:</span>
-                                <span className="text-foreground">{result.imageAnalysis.technicalAnalysis.resolution}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Color Depth:</span>
-                                <span className="text-foreground">{result.imageAnalysis.technicalAnalysis.colorDepth} bit</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Format:</span>
-                                <span className="text-foreground">{result.imageAnalysis.technicalAnalysis.compressionType}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                           {/* Technical Analysis */}
+                           <div>
+                             <h5 className="text-xs font-medium text-foreground mb-1">Technical Details</h5>
+                             <div className="grid grid-cols-2 gap-2 text-xs">
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Resolution:</span>
+                                 <span className="text-foreground">{result.imageAnalysis.technicalAnalysis.resolution}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Color Depth:</span>
+                                 <span className="text-foreground">{result.imageAnalysis.technicalAnalysis.colorDepth} bit</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Format:</span>
+                                 <span className="text-foreground">{result.imageAnalysis.technicalAnalysis.compressionType}</span>
+                               </div>
+                             </div>
+                           </div>
+                         </div>
+                       )}
+
+                       {/* Enhanced Video Analysis */}
+                       {'videoAnalysis' in result && result.videoAnalysis && (
+                         <div>
+                           <h4 className="text-sm font-medium text-foreground mb-2">
+                             Video Analysis Details
+                           </h4>
+                           
+                           {/* Frame Analysis */}
+                           <div className="mb-3">
+                             <h5 className="text-xs font-medium text-foreground mb-1">Frame Analysis</h5>
+                             <div className="grid grid-cols-2 gap-2 text-xs">
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Total Frames:</span>
+                                 <span className="text-foreground">{result.videoAnalysis.frameAnalysis.totalFrames}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Max Score:</span>
+                                 <span className="text-foreground">{(result.videoAnalysis.frameAnalysis.maxScore * 100).toFixed(0)}%</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Average Score:</span>
+                                 <span className="text-foreground">{(result.videoAnalysis.frameAnalysis.averageScore * 100).toFixed(0)}%</span>
+                               </div>
+                             </div>
+                           </div>
+
+                           {/* Manipulation Indicators */}
+                           <div className="mb-3">
+                             <h5 className="text-xs font-medium text-foreground mb-1">Manipulation Indicators</h5>
+                             <div className="space-y-1">
+                               <div className="flex justify-between text-xs">
+                                 <span className="text-muted-foreground">Temporal Inconsistencies:</span>
+                                 <span className="text-foreground">{(result.videoAnalysis.manipulationIndicators.temporalInconsistencies * 100).toFixed(0)}%</span>
+                               </div>
+                               <div className="flex justify-between text-xs">
+                                 <span className="text-muted-foreground">Frame Editing Signs:</span>
+                                 <span className="text-foreground">{(result.videoAnalysis.manipulationIndicators.frameEditingSigns * 100).toFixed(0)}%</span>
+                               </div>
+                               <div className="flex justify-between text-xs">
+                                 <span className="text-muted-foreground">Compression Artifacts:</span>
+                                 <span className="text-foreground">{(result.videoAnalysis.manipulationIndicators.compressionArtifacts * 100).toFixed(0)}%</span>
+                               </div>
+                               <div className="flex justify-between text-xs">
+                                 <span className="text-muted-foreground">Audio-Video Sync:</span>
+                                 <span className="text-foreground">{(result.videoAnalysis.manipulationIndicators.audioVideoSync * 100).toFixed(0)}%</span>
+                               </div>
+                             </div>
+                           </div>
+
+                           {/* Technical Analysis */}
+                           <div>
+                             <h5 className="text-xs font-medium text-foreground mb-1">Technical Details</h5>
+                             <div className="grid grid-cols-2 gap-2 text-xs">
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Resolution:</span>
+                                 <span className="text-foreground">{result.videoAnalysis.technicalAnalysis.resolution}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Duration:</span>
+                                 <span className="text-foreground">{result.videoAnalysis.technicalAnalysis.duration}s</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">FPS:</span>
+                                 <span className="text-foreground">{result.videoAnalysis.technicalAnalysis.fps}</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Frames Analyzed:</span>
+                                 <span className="text-foreground">{result.videoAnalysis.technicalAnalysis.framesAnalyzed}</span>
+                               </div>
+                             </div>
+                           </div>
+                         </div>
+                       )}
+
+                       {/* Enhanced Audio Analysis */}
+                       {'audioAnalysis' in result && result.audioAnalysis && (
+                         <div>
+                           <h4 className="text-sm font-medium text-foreground mb-2">
+                             Audio Analysis Details
+                           </h4>
+                           
+                           {/* Voice Characteristics */}
+                           <div className="mb-3">
+                             <h5 className="text-xs font-medium text-foreground mb-1">Voice Characteristics</h5>
+                             <div className="grid grid-cols-2 gap-2 text-xs">
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Naturalness:</span>
+                                 <span className="text-foreground">{(result.audioAnalysis.voiceCharacteristics.naturalness * 100).toFixed(0)}%</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Consistency:</span>
+                                 <span className="text-foreground">{(result.audioAnalysis.voiceCharacteristics.consistency * 100).toFixed(0)}%</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Background Noise:</span>
+                                 <span className="text-foreground">{(result.audioAnalysis.voiceCharacteristics.backgroundNoise * 100).toFixed(0)}%</span>
+                               </div>
+                             </div>
+                           </div>
+
+                           {/* Synthetic Indicators */}
+                           <div className="mb-3">
+                             <h5 className="text-xs font-medium text-foreground mb-1">Synthetic Indicators</h5>
+                             <div className="space-y-1">
+                               <div className="flex justify-between text-xs">
+                                 <span className="text-muted-foreground">Artificial Patterns:</span>
+                                 <span className="text-foreground">{(result.audioAnalysis.syntheticIndicators.artificialPatterns * 100).toFixed(0)}%</span>
+                               </div>
+                               <div className="flex justify-between text-xs">
+                                 <span className="text-muted-foreground">Frequency Anomalies:</span>
+                                 <span className="text-foreground">{(result.audioAnalysis.syntheticIndicators.frequencyAnomalies * 100).toFixed(0)}%</span>
+                               </div>
+                               <div className="flex justify-between text-xs">
+                                 <span className="text-muted-foreground">Temporal Inconsistencies:</span>
+                                 <span className="text-foreground">{(result.audioAnalysis.syntheticIndicators.temporalInconsistencies * 100).toFixed(0)}%</span>
+                               </div>
+                             </div>
+                           </div>
+
+                           {/* Quality Metrics */}
+                           <div>
+                             <h5 className="text-xs font-medium text-foreground mb-1">Quality Metrics</h5>
+                             <div className="grid grid-cols-2 gap-2 text-xs">
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Clarity:</span>
+                                 <span className="text-foreground">{(result.audioAnalysis.qualityMetrics.clarity * 100).toFixed(0)}%</span>
+                               </div>
+                               <div className="flex justify-between">
+                                 <span className="text-muted-foreground">Stability:</span>
+                                 <span className="text-foreground">{(result.audioAnalysis.qualityMetrics.stability * 100).toFixed(0)}%</span>
+                               </div>
+                             </div>
+                           </div>
+                         </div>
+                       )}
 
                       {/* Metadata */}
                       {result.metadata && (
