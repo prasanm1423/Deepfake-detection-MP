@@ -6,6 +6,14 @@ import { testSightengineAPI } from "./routes/test-api.js";
 import { debugFileUpload } from "./routes/analyze.js";
 
 export function createServer() {
+  // Environment variable verification
+  console.log('=== ENVIRONMENT VARIABLE CHECK ===');
+  console.log('- SIGHTENGINE_USER:', process.env.SIGHTENGINE_USER ? 'SET' : 'MISSING');
+  console.log('- SIGHTENGINE_SECRET:', process.env.SIGHTENGINE_SECRET ? 'SET' : 'MISSING');
+  console.log('- RESEMBLE_API_KEY:', process.env.RESEMBLE_API_KEY ? 'SET' : 'MISSING');
+  console.log('- API Status:', (process.env.SIGHTENGINE_USER && process.env.SIGHTENGINE_SECRET) ? 'READY' : 'DEMO MODE');
+  console.log('=====================================');
+
   const app = express();
 
   // Middleware

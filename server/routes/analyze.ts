@@ -24,14 +24,34 @@ const storage = multer.diskStorage({
 export const upload = multer({ 
   storage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit to match API requirements
   },
   fileFilter: (req, file, cb) => {
-    const category = getFileCategory(file.mimetype);
-    if (category === 'unsupported') {
-      cb(new Error('Unsupported file type'));
+    // Enhanced file validation
+    if (!file) {
+      cb(new Error('No file provided'));
       return;
     }
+
+    // Check file size before processing
+    if (file.size > 10 * 1024 * 1024) {
+      cb(new Error('File size exceeds 10MB limit'));
+      return;
+    }
+
+    // Validate file type
+    const category = getFileCategory(file.mimetype);
+    if (category === 'unsupported') {
+      cb(new Error(`Unsupported file type: ${file.mimetype}`));
+      return;
+    }
+
+    // Additional security checks
+    if (!file.originalname || file.originalname.length > 255) {
+      cb(new Error('Invalid filename'));
+      return;
+    }
+
     cb(null, true);
   }
 });
@@ -125,6 +145,8 @@ async function analyzeImage(filePath: string): Promise<any> {
           ...form.getHeaders(),
         },
         timeout: 30000, // 30 second timeout
+        maxContentLength: 10 * 1024 * 1024, // 10MB limit
+        maxBodyLength: 10 * 1024 * 1024, // 10MB limit
       }
     );
 
@@ -178,6 +200,15 @@ async function analyzeImage(filePath: string): Promise<any> {
         console.log('=== FULL ERROR RESPONSE ===');
         console.log(JSON.stringify(error.response.data, null, 2));
         console.log('=== END ERROR RESPONSE ===');
+      }
+
+      // Handle specific HTTP error codes with detailed logging
+      if (error.response?.status === 413) {
+        console.error('File too large for API - this should not happen with 10MB limit');
+      } else if (error.response?.status === 429) {
+        console.error('API rate limit exceeded - consider implementing backoff');
+      } else if (error.response?.status >= 500) {
+        console.error('API server error - external service issue');
       }
     }
 
@@ -610,8 +641,16 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
           throw new Error('Unsupported file type');
       }
 
-      // Clean up uploaded file
-      fs.unlinkSync(filePath);
+      // Clean up uploaded file immediately after processing
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log('Temporary file cleaned up successfully');
+        }
+      } catch (cleanupError) {
+        console.error('File cleanup error:', cleanupError);
+        // Don't fail the request due to cleanup issues
+      }
 
       res.json({
         success: true,
@@ -619,9 +658,15 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
       } as AnalysisResponse);
 
     } catch (apiError) {
-      // Clean up file on error
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      // Clean up file on error with better error handling
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log('Temporary file cleaned up after error');
+        }
+      } catch (cleanupError) {
+        console.error('File cleanup error after API failure:', cleanupError);
+        // Continue with the original error
       }
       throw apiError;
     }
