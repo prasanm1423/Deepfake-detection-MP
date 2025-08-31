@@ -1,43 +1,53 @@
-# Quick API Setup Guide
+# Quick Setup Guide
 
-## Option 1: Automated Setup (Recommended)
+## 🚀 Simple Setup (Recommended)
 
-Run the setup script:
+### Option 1: Copy .env.example (Easiest)
 ```bash
-node setup-api.js
+# 1. Copy the example environment file
+cp .env.example .env
+
+# 2. Edit .env and replace placeholder values with your API keys
+# 3. Start the development server
+pnpm dev
 ```
 
-This will guide you through entering your API credentials interactively.
 
-## Option 2: Manual Setup
 
-1. **Create a `.env` file** in the project root directory
-2. **Add your API credentials** to the file:
+## 🔑 Getting API Keys
 
-```env
-# Sightengine API (Image & Video Analysis)
-SIGHTENGINE_USER=your_sightengine_user_id_here
-SIGHTENGINE_SECRET=your_sightengine_secret_here
-
-# Resemble AI Detect API (Audio Analysis)
-RESEMBLE_API_KEY=your_resemble_api_key_here
-```
-
-## Getting API Keys
-
-### 🌐 Sightengine API
+### 🌐 Sightengine API (Image & Video Analysis)
 1. Visit: https://sightengine.com/
 2. Sign up for a free account
 3. Go to your dashboard
 4. Copy your **User ID** and **Secret**
 
-### 🎵 Resemble AI Detect API
+### 🎵 Resemble AI Detect API (Audio Analysis)
 1. Visit: https://www.resemble.ai/detect/
 2. Sign up for an account
 3. Navigate to API section
 4. Generate and copy your **API key**
 
-## Verification
+## 📝 Environment File Structure
+
+Your `.env` file should look like this:
+
+```env
+# Frontend (Vite exposes VITE_* to the browser)
+VITE_PUBLIC_BUILDER_KEY=YOUR_BUILDER_PUBLIC_KEY
+PING_MESSAGE=ping
+
+# Supabase Configuration (Already configured)
+VITE_SUPABASE_URL=https://mlkpqorzqxdgitwzwkki.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sa3Bxb3J6cXhkZ2l0d3p3a2tpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5NDE2MzAsImV4cCI6MjA3MTUxNzYzMH0.LTBq5LNS_TiYSJzn5d78VRnppiz50KoE-BeFgZnvxZc
+
+# Backend API Keys (Required for real deepfake detection)
+SIGHTENGINE_USER=your_sightengine_user_id_here
+SIGHTENGINE_SECRET=your_sightengine_secret_here
+RESEMBLE_API_KEY=your_resemble_api_key_here
+```
+
+## ✅ Verification
 
 After setting up your credentials:
 
@@ -57,8 +67,16 @@ After setting up your credentials:
 
 3. **Test with an image** - upload a test image and you should get real analysis results instead of demo data.
 
-## Troubleshooting
+## 🚨 Demo Mode
+
+If you don't configure API keys, the app will run in demo mode with:
+- Mock responses for testing
+- Sample data to explore features
+- Full UI functionality
+
+## 🔧 Troubleshooting
 
 - **"MISSING" status**: Check that your `.env` file is in the project root
 - **"DEMO MODE"**: API credentials not properly configured
 - **API errors**: Verify your credentials are correct and you have sufficient API credits
+- **File upload issues**: Check file size limits (10MB max)
