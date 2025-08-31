@@ -12,7 +12,7 @@ import { FileUpload } from '@/components/FileUpload'
 import { CameraCapture } from '@/components/CameraCapture'
 import { AnalysisSuccess } from '@/components/AnalysisSuccess'
 import { AnalysisResult } from '@shared/api'
-import { trackAnalysis, testSupabaseConnection, saveAnalysisToHistory } from '@/lib/supabase'
+import { trackAnalysis, saveAnalysisToHistory } from '@/lib/supabase'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -21,7 +21,7 @@ export default function Dashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [lastResult, setLastResult] = useState<AnalysisResult | null>(null)
-  const [supabaseStatus, setSupabaseStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking')
+
 
   const usagePercentage = usageLimit === -1 ? 0 : (monthlyUsage / usageLimit) * 100
 
@@ -60,20 +60,7 @@ export default function Dashboard() {
 
   const tierInfo = getTierInfo(profile?.subscription_tier || 'free')
 
-  // Check Supabase connection status
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const isConnected = await testSupabaseConnection()
-        setSupabaseStatus(isConnected ? 'connected' : 'disconnected')
-      } catch (error) {
-        console.warn('Failed to check Supabase connection:', error)
-        setSupabaseStatus('disconnected')
-      }
-    }
-    
-    checkConnection()
-  }, [])
+
 
   const handleAnalysisStart = () => {
     setIsAnalyzing(true)
@@ -200,14 +187,7 @@ export default function Dashboard() {
                  </Button>
                )}
                
-               {/* Connection Status */}
-              <Badge 
-                variant={supabaseStatus === 'connected' ? 'default' : 'destructive'}
-                className="text-xs"
-              >
-                {supabaseStatus === 'connected' ? '🟢 Connected' : 
-                 supabaseStatus === 'checking' ? '🟡 Checking...' : '🔴 Disconnected'}
-              </Badge>
+
               
               <Badge className={tierInfo.color}>
                 {tierInfo.icon}

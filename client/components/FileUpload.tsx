@@ -48,9 +48,9 @@ export function FileUpload({ onAnalysisComplete, onAnalysisStart }: FileUploadPr
       return;
     }
 
-    // Check file size (50MB limit)
-    if (file.size > 50 * 1024 * 1024) {
-      setError('File size must be less than 50MB.');
+    // Check file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size must be less than 10MB.');
       return;
     }
 
@@ -144,7 +144,7 @@ export function FileUpload({ onAnalysisComplete, onAnalysisStart }: FileUploadPr
         <div className="text-center">
           <h3 className="text-lg font-semibold text-foreground">Upload Media for Analysis</h3>
           <p className="text-sm text-muted-foreground">
-            Support for images, videos, and audio files (max 50MB)
+            Support for images, videos, and audio files (max 10MB)
           </p>
         </div>
 
