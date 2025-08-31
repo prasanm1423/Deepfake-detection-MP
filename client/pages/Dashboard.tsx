@@ -12,7 +12,7 @@ import { FileUpload } from '@/components/FileUpload'
 import { CameraCapture } from '@/components/CameraCapture'
 import { AnalysisSuccess } from '@/components/AnalysisSuccess'
 import { AnalysisResult } from '@shared/api'
-import { trackAnalysis, testSupabaseConnection } from '@/lib/supabase'
+import { trackAnalysis, testSupabaseConnection, saveAnalysisToHistory } from '@/lib/supabase'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -87,7 +87,40 @@ export default function Dashboard() {
     // Save results to localStorage for the results page
     localStorage.setItem('analysisResults', JSON.stringify(newResults))
 
-    // Track the analysis in the database
+    // Save complete analysis to history database
+    try {
+      const historyResult = await saveAnalysisToHistory({
+        analysis_type: result.type,
+        file_name: result.metadata?.file_name,
+        file_size: result.metadata?.file_size,
+        file_type: result.metadata?.file_type,
+        is_deepfake: result.isDeepfake,
+        confidence: result.confidence,
+        risk_level: result.riskLevel,
+        confidence_category: result.confidenceCategory,
+        analysis_quality: result.analysisQuality,
+        analysis_time: result.analysisTime,
+        api_provider: result.type === 'audio' ? 'resemble' : 'sightengine',
+        models_used: result.processingDetails?.modelsUsed,
+        quality_score: result.processingDetails?.qualityScore,
+        processing_details: result.processingDetails,
+        recommendations: result.recommendations,
+        limitations: result.limitations,
+        metadata: result.metadata,
+        image_analysis: 'imageAnalysis' in result ? result.imageAnalysis : undefined,
+        video_analysis: 'videoAnalysis' in result ? result.videoAnalysis : undefined,
+        audio_analysis: 'audioAnalysis' in result ? result.audioAnalysis : undefined,
+        raw_response: result
+      })
+      
+      if (historyResult.error) {
+        console.warn('Analysis history save failed (non-critical):', historyResult.error)
+      }
+    } catch (error) {
+      console.warn('Error saving analysis to history (non-critical):', error)
+    }
+
+    // Track the analysis in the database (for usage tracking)
     try {
       const trackingResult = await trackAnalysis({
         analysis_type: result.type,
@@ -144,20 +177,30 @@ export default function Dashboard() {
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              {/* Results Link */}
-              {results.length > 0 && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => navigate('/results', { state: { results } })}
-                >
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Results ({results.length})
-                </Button>
-              )}
-              
-              {/* Connection Status */}
+                         <div className="flex items-center space-x-4">
+               {/* Analysis History Link */}
+               <Button 
+                 variant="ghost" 
+                 size="sm" 
+                 onClick={() => navigate('/history')}
+               >
+                 <BarChart3 className="h-4 w-4 mr-2" />
+                 History
+               </Button>
+               
+               {/* Results Link */}
+               {results.length > 0 && (
+                 <Button 
+                   variant="ghost" 
+                   size="sm" 
+                   onClick={() => navigate('/results', { state: { results } })}
+                 >
+                   <BarChart3 className="h-4 w-4 mr-2" />
+                   Results ({results.length})
+                 </Button>
+               )}
+               
+               {/* Connection Status */}
               <Badge 
                 variant={supabaseStatus === 'connected' ? 'default' : 'destructive'}
                 className="text-xs"

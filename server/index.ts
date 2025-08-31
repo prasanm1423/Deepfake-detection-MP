@@ -1,10 +1,10 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import rateLimit from "express-rate-limit";
 import { handleDemo } from "./routes/demo.js";
-import { testSightengineAPI } from "./routes/test-api.js";
+import { testSightengineAPI, testResembleAPI } from "./routes/test-api.js";
 import { debugFileUpload } from "./routes/analyze.js";
+import { createRateLimiters } from "./utils/rateLimiter.js";
 
 export function createServer() {
   // Environment variable verification
@@ -15,65 +15,8 @@ export function createServer() {
   console.log('- API Status:', (process.env.SIGHTENGINE_USER && process.env.SIGHTENGINE_SECRET) ? 'READY' : 'DEMO MODE');
   console.log('=====================================');
 
-  // Rate limiting configuration
-  const generalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    message: {
-      error: 'Too many requests from this IP, please try again later.',
-      retryAfter: '15 minutes'
-    },
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    handler: (req, res) => {
-      res.status(429).json({
-        success: false,
-        error: 'Rate limit exceeded',
-        message: 'Too many requests from this IP, please try again later.',
-        retryAfter: Math.ceil(15 * 60 / 1000) // minutes
-      });
-    }
-  });
-
-  // Stricter rate limiting for analysis endpoints
-  const analysisLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // Limit each IP to 20 analysis requests per 15 minutes
-    message: {
-      error: 'Analysis rate limit exceeded. Please wait before uploading more files.',
-      retryAfter: '15 minutes'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    handler: (req, res) => {
-      res.status(429).json({
-        success: false,
-        error: 'Analysis rate limit exceeded',
-        message: 'You have exceeded the analysis limit. Please wait before uploading more files.',
-        retryAfter: Math.ceil(15 * 60 / 1000)
-      });
-    }
-  });
-
-  // File upload rate limiting (more restrictive)
-  const uploadLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // Limit each IP to 10 file uploads per 15 minutes
-    message: {
-      error: 'Upload rate limit exceeded. Please wait before uploading more files.',
-      retryAfter: '15 minutes'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    handler: (req, res) => {
-      res.status(429).json({
-        success: false,
-        error: 'Upload rate limit exceeded',
-        message: 'You have exceeded the upload limit. Please wait before uploading more files.',
-        retryAfter: Math.ceil(15 * 60 / 1000)
-      });
-    }
-  });
+  // Create rate limiters using the enhanced utility
+  const { generalLimiter, analysisLimiter, uploadLimiter, statusLimiter } = createRateLimiters();
 
   const app = express();
 
@@ -86,15 +29,17 @@ export function createServer() {
         return callback(null, true);
       }
       
-      // Allow localhost and your domain
-      const allowedOrigins = [
-        'http://localhost:3000',
-        'http://localhost:5173',
-        'http://localhost:8080',
-        'http://127.0.0.1:3000',
-        'http://127.0.0.1:5173',
-        'http://127.0.0.1:8080'
-      ];
+             // Allow localhost and your domain
+       const allowedOrigins = [
+         'http://localhost:3000',
+         'http://localhost:5173',
+         'http://localhost:8080',
+         'http://localhost:8081',
+         'http://127.0.0.1:3000',
+         'http://127.0.0.1:5173',
+         'http://127.0.0.1:8080',
+         'http://127.0.0.1:8081'
+       ];
       
       if (allowedOrigins.includes(origin)) {
         console.log('Origin allowed:', origin);
@@ -200,6 +145,7 @@ export function createServer() {
 
   // Test API credentials
   app.get("/api/test-sightengine", testSightengineAPI);
+  app.get("/api/test-resemble", testResembleAPI);
   
   // Debug file upload endpoint
   app.post("/api/debug-upload", uploadLimiter, async (req, res) => {
@@ -232,11 +178,32 @@ export function createServer() {
   });
 
   // Environment status endpoint for frontend to check API key configuration
-  app.get("/api/status", (_req, res) => {
+  app.get("/api/status", statusLimiter, (_req, res) => {
     res.json({
       sightengineConfigured: !!(process.env.SIGHTENGINE_USER && process.env.SIGHTENGINE_SECRET),
       resembleConfigured: !!process.env.RESEMBLE_API_KEY,
       message: "Deepfake Detection API Ready"
+    });
+  });
+
+  // API rate limits status endpoint
+  app.get("/api/rate-limits", statusLimiter, (_req, res) => {
+    const { getRemainingAPICalls } = require("./utils/rateLimiter.js");
+    
+    res.json({
+      sightengine: getRemainingAPICalls('sightengine'),
+      resemble: getRemainingAPICalls('resemble'),
+      message: "API Rate Limits Status"
+    });
+  });
+
+  // Reset rate limits endpoint (for development/testing)
+  app.post("/api/reset-rate-limits", (_req, res) => {
+    const { resetRateLimits } = require("./utils/rateLimiter.js");
+    resetRateLimits();
+    res.json({
+      success: true,
+      message: "Rate limits reset successfully"
     });
   });
 

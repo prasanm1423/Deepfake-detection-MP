@@ -129,7 +129,8 @@ The system combines multiple AI detection models to provide comprehensive analys
 ```typescript
 POST /api/analyze           # Main analysis endpoint for all media types
 GET  /api/status           # API health and configuration status
-GET  /api/test-sightengine # API credentials validation endpoint
+GET  /api/test-sightengine # Sightengine API credentials validation endpoint
+GET  /api/test-resemble    # Resemble AI API credentials validation endpoint
 ```
 
 ### Database Schema (Future Enhancement):

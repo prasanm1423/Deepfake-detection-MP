@@ -182,3 +182,226 @@ export const getSubscriptionLimits = async (tier: string) => {
 
   return { data, error }
 }
+
+// Analysis History Types
+export interface AnalysisHistory {
+  id: string
+  user_id: string
+  analysis_type: 'image' | 'video' | 'audio'
+  file_name?: string
+  file_size?: number
+  file_type?: string
+  is_deepfake: boolean
+  confidence: number
+  risk_level?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  confidence_category?: 'VERY_LOW' | 'LOW' | 'MEDIUM' | 'HIGH' | 'VERY_HIGH'
+  analysis_quality?: 'DEMO' | 'API' | 'ENHANCED'
+  analysis_time?: number
+  api_provider?: 'sightengine' | 'resemble' | 'demo'
+  models_used?: string[]
+  quality_score?: number
+  processing_details?: any
+  recommendations?: string[]
+  limitations?: string[]
+  metadata?: any
+  image_analysis?: any
+  video_analysis?: any
+  audio_analysis?: any
+  raw_response?: any
+  created_at: string
+  updated_at: string
+}
+
+export interface AnalysisStats {
+  total_analyses: number
+  deepfake_count: number
+  authentic_count: number
+  avg_confidence: number
+  image_count: number
+  video_count: number
+  audio_count: number
+  high_risk_count: number
+  medium_risk_count: number
+  low_risk_count: number
+}
+
+// Analysis History Functions
+export const saveAnalysisToHistory = async (analysisData: {
+  analysis_type: 'image' | 'video' | 'audio'
+  file_name?: string
+  file_size?: number
+  file_type?: string
+  is_deepfake: boolean
+  confidence: number
+  risk_level?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  confidence_category?: 'VERY_LOW' | 'LOW' | 'MEDIUM' | 'HIGH' | 'VERY_HIGH'
+  analysis_quality?: 'DEMO' | 'API' | 'ENHANCED'
+  analysis_time?: number
+  api_provider?: 'sightengine' | 'resemble' | 'demo'
+  models_used?: string[]
+  quality_score?: number
+  processing_details?: any
+  recommendations?: string[]
+  limitations?: string[]
+  metadata?: any
+  image_analysis?: any
+  video_analysis?: any
+  audio_analysis?: any
+  raw_response?: any
+}) => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.warn('Auth error in saveAnalysisToHistory:', authError)
+      return { data: null, error: authError || new Error('User not authenticated') }
+    }
+
+    const { data, error } = await supabase
+      .from('analysis_history')
+      .insert({
+        user_id: user.id,
+        ...analysisData,
+      })
+      .select()
+      .single()
+
+    return { data, error }
+  } catch (error) {
+    console.error('Error in saveAnalysisToHistory:', error)
+    return { data: null, error }
+  }
+}
+
+export const getUserAnalysisHistory = async (limit = 50, offset = 0) => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.warn('Auth error in getUserAnalysisHistory:', authError)
+      return { data: null, error: authError || new Error('User not authenticated') }
+    }
+
+    const { data, error } = await supabase
+      .from('analysis_history')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    return { data, error }
+  } catch (error) {
+    console.error('Error in getUserAnalysisHistory:', error)
+    return { data: null, error }
+  }
+}
+
+export const getUserAnalysisStats = async () => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.warn('Auth error in getUserAnalysisStats:', authError)
+      return { data: null, error: authError || new Error('User not authenticated') }
+    }
+
+    const { data, error } = await supabase
+      .rpc('get_user_analysis_stats', { user_uuid: user.id })
+
+    return { data: data?.[0] || null, error }
+  } catch (error) {
+    console.error('Error in getUserAnalysisStats:', error)
+    return { data: null, error }
+  }
+}
+
+export const getRecentAnalyses = async (limit = 10) => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.warn('Auth error in getRecentAnalyses:', authError)
+      return { data: null, error: authError || new Error('User not authenticated') }
+    }
+
+    const { data, error } = await supabase
+      .rpc('get_recent_analyses', { 
+        user_uuid: user.id, 
+        limit_count: limit 
+      })
+
+    return { data, error }
+  } catch (error) {
+    console.error('Error in getRecentAnalyses:', error)
+    return { data: null, error }
+  }
+}
+
+export const getAnalysisById = async (analysisId: string) => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.warn('Auth error in getAnalysisById:', authError)
+      return { data: null, error: authError || new Error('User not authenticated') }
+    }
+
+    const { data, error } = await supabase
+      .from('analysis_history')
+      .select('*')
+      .eq('id', analysisId)
+      .eq('user_id', user.id)
+      .single()
+
+    return { data, error }
+  } catch (error) {
+    console.error('Error in getAnalysisById:', error)
+    return { data: null, error }
+  }
+}
+
+export const deleteAnalysis = async (analysisId: string) => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.warn('Auth error in deleteAnalysis:', authError)
+      return { data: null, error: authError || new Error('User not authenticated') }
+    }
+
+    const { data, error } = await supabase
+      .from('analysis_history')
+      .delete()
+      .eq('id', analysisId)
+      .eq('user_id', user.id)
+
+    return { data, error }
+  } catch (error) {
+    console.error('Error in deleteAnalysis:', error)
+    return { data: null, error }
+  }
+}
+
+export const searchAnalyses = async (query: string, limit = 20) => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.warn('Auth error in searchAnalyses:', authError)
+      return { data: null, error: authError || new Error('User not authenticated') }
+    }
+
+    const { data, error } = await supabase
+      .from('analysis_history')
+      .select('*')
+      .eq('user_id', user.id)
+      .or(`file_name.ilike.%${query}%,analysis_type.ilike.%${query}%`)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    return { data, error }
+  } catch (error) {
+    console.error('Error in searchAnalyses:', error)
+    return { data: null, error }
+  }
+}

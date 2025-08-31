@@ -60,4 +60,11 @@ The application shows the configuration status in the header badges:
 4. Generate and copy your API key
 
 ## Testing
-Once configured, upload test media files to verify the APIs are working correctly. The application will show real detection results instead of demo responses.
+Once configured, you can test the APIs using the following endpoints:
+
+### Test API Credentials:
+- **Sightengine**: `GET /api/test-sightengine` - Tests image/video analysis API
+- **Resemble AI**: `GET /api/test-resemble` - Tests audio analysis API
+
+### Test with Media Files:
+Upload test media files to verify the APIs are working correctly. The application will show real detection results instead of demo responses.

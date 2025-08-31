@@ -14,6 +14,7 @@ import Signup from "./pages/Signup";
 import Pricing from "./pages/Pricing";
 import Dashboard from "./pages/Dashboard";
 import AnalysisResults from "./pages/AnalysisResults";
+import AnalysisHistory from "./pages/AnalysisHistory";
 import NotFound from "./pages/NotFound";
 import SetupGuide from "./components/SetupGuide";
 
@@ -87,13 +88,18 @@ const AppRoutes = () => {
           <Dashboard />
         </ProtectedRoute>
       } />
-      <Route path="/results" element={
-        <ProtectedRoute>
-          <AnalysisResults />
-        </ProtectedRoute>
-      } />
+             <Route path="/results" element={
+         <ProtectedRoute>
+           <AnalysisResults />
+         </ProtectedRoute>
+       } />
+       <Route path="/history" element={
+         <ProtectedRoute>
+           <AnalysisHistory />
+         </ProtectedRoute>
+       } />
 
-      {/* Catch all route */}
+       {/* Catch all route */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
