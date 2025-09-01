@@ -1,292 +1,382 @@
-import { useState, useRef, useCallback } from 'react';
-import { Upload, FileImage, FileVideo, Music, X, Loader2, AlertCircle, CheckCircle, Shield } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { LoadingSpinner, ProgressBar } from '@/components/ui/loading-spinner';
-import { InlineError } from '@/components/ui/error-boundary';
-import { ALL_SUPPORTED_TYPES, getFileCategory, AnalysisResult } from '@shared/api';
+import { useState, useRef, useCallback } from 'react'
+import { Upload, File, X, AlertCircle, CheckCircle, Loader2, Camera, Video, Music, Image, FileText } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
+import { Badge } from '@/components/ui/badge'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { InlineError } from '@/components/ui/error-boundary'
+import { Text, Caption, Label } from '@/components/ui/typography'
+import { AnalysisResult } from '@shared/api'
 
 interface FileUploadProps {
-  onAnalysisComplete: (result: AnalysisResult) => void;
-  onAnalysisStart: () => void;
+  onAnalysisComplete: (result: AnalysisResult) => void
+  onAnalysisStart: () => void
 }
 
-export function FileUpload({ onAnalysisComplete, onAnalysisStart }: FileUploadProps) {
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [analysisStage, setAnalysisStage] = useState<'uploading' | 'processing' | 'complete'>('uploading');
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export default function FileUpload({ onAnalysisComplete, onAnalysisStart }: FileUploadProps) {
+  const [dragActive, setDragActive] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [analysisStage, setAnalysisStage] = useState<'idle' | 'uploading' | 'processing' | 'complete'>('idle')
+  const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  }, []);
+  const maxRetries = 3
+  const maxFileSize = 10 * 1024 * 1024 // 10MB
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  }, []);
+  const getFileIcon = (file: File) => {
+    if (file.type.startsWith('image/')) return <Image className="h-8 w-8 text-blue-500" />
+    if (file.type.startsWith('video/')) return <Video className="h-8 w-8 text-green-500" />
+    if (file.type.startsWith('audio/')) return <Music className="h-8 w-8 text-purple-500" />
+    return <FileText className="h-8 w-8 text-gray-500" />
+  }
+
+  const getFileType = (file: File) => {
+    if (file.type.startsWith('image/')) return 'Image'
+    if (file.type.startsWith('video/')) return 'Video'
+    if (file.type.startsWith('audio/')) return 'Audio'
+    return 'File'
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  const validateFile = (file: File): string | null => {
+    if (file.size > maxFileSize) {
+      return `File size must be less than 10MB. Current size: ${formatFileSize(file.size)}`
+    }
+
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/webp',
+      'video/mp4', 'video/webm', 'video/quicktime',
+      'audio/wav', 'audio/mpeg', 'audio/mp4', 'audio/ogg'
+    ]
+
+    if (!allowedTypes.includes(file.type)) {
+      return `File type not supported. Allowed types: ${allowedTypes.join(', ')}`
+    }
+
+    return null
+  }
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+      setIsDragOver(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
+      setIsDragOver(false)
+    }
+  }, [])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFileSelection(files[0]);
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    setIsDragOver(false)
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const droppedFile = e.dataTransfer.files[0]
+      const validationError = validateFile(droppedFile)
+      if (validationError) {
+        setError(validationError)
+        return
+      }
+      setFile(droppedFile)
+      setError(null)
     }
-  }, []);
+  }, [])
 
-  const handleFileSelection = (file: File) => {
-    setError(null);
-    setRetryCount(0);
-    
-    // Check file type
-    const category = getFileCategory(file.type);
-    if (category === 'unsupported') {
-      setError('Unsupported file type. Please upload an image, video, or audio file.');
-      return;
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0]
+    if (selectedFile) {
+      const validationError = validateFile(selectedFile)
+      if (validationError) {
+        setError(validationError)
+        return
+      }
+      setFile(selectedFile)
+      setError(null)
     }
+  }
 
-    // Check file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-      setError('File size must be less than 10MB.');
-      return;
+  const removeFile = () => {
+    setFile(null)
+    setError(null)
+    setProgress(0)
+    setAnalysisStage('idle')
+    setRetryCount(0)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
+  }
 
-    setSelectedFile(file);
-  };
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFileSelection(files[0]);
+  const retryAnalysis = async () => {
+    if (file && retryCount < maxRetries) {
+      setRetryCount(prev => prev + 1)
+      setError(null)
+      await performAnalysis(file)
     }
-  };
+  }
 
-  const analyzeFile = async () => {
-    if (!selectedFile) return;
-
-    setIsAnalyzing(true);
-    setUploadProgress(0);
-    setError(null);
-    setAnalysisStage('uploading');
-    onAnalysisStart();
+  const performAnalysis = async (selectedFile: File) => {
+    if (!selectedFile) return
 
     try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
+      setIsAnalyzing(true)
+      setError(null)
+      setProgress(0)
+      setAnalysisStage('uploading')
+      onAnalysisStart()
 
       // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
+      const uploadInterval = setInterval(() => {
+        setProgress(prev => {
           if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
+            clearInterval(uploadInterval)
+            return 90
           }
-          return prev + 10;
-        });
-      }, 200);
+          return prev + 10
+        })
+      }, 200)
 
+      // Create FormData
+      const formData = new FormData()
+      formData.append('file', selectedFile)
+
+      // Make API call
       const response = await fetch('/api/analyze', {
         method: 'POST',
         body: formData,
-      });
+      })
 
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      setAnalysisStage('processing');
+      clearInterval(uploadInterval)
 
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || 'Analysis failed');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      setAnalysisStage('complete');
-      
-      // Small delay to show completion state
+      setProgress(100)
+      setAnalysisStage('processing')
+
+      const responseData = await response.json()
+
+      if (!responseData.success) {
+        throw new Error(responseData.error || 'Analysis failed')
+      }
+
+      const result: AnalysisResult = responseData.result
+
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      setAnalysisStage('complete')
+      setIsAnalyzing(false)
+
+      // Show completion state briefly
       setTimeout(() => {
-        onAnalysisComplete(data.result);
-        setSelectedFile(null);
-        setAnalysisStage('uploading');
-      }, 1000);
+        onAnalysisComplete(result)
+        setProgress(0)
+        setAnalysisStage('idle')
+      }, 1500)
+
+    } catch (error) {
+      console.error('Analysis failed:', error)
+      setIsAnalyzing(false)
+      setProgress(0)
+      setAnalysisStage('idle')
       
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed');
-      setRetryCount(prev => prev + 1);
-    } finally {
-      setIsAnalyzing(false);
-      setUploadProgress(0);
+      if (retryCount < maxRetries) {
+        setError(`Analysis failed. ${retryCount + 1}/${maxRetries} attempts. Click "Try Again" to retry.`)
+      } else {
+        setError(`Analysis failed after ${maxRetries} attempts. Please check your file and try again later.`)
+      }
     }
-  };
+  }
 
-  const clearFile = () => {
-    setSelectedFile(null);
-    setError(null);
-    setRetryCount(0);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const handleAnalyze = () => {
+    if (file) {
+      performAnalysis(file)
     }
-  };
-
-  const retryAnalysis = () => {
-    setError(null);
-    analyzeFile();
-  };
-
-  const getFileIcon = (file: File) => {
-    const category = getFileCategory(file.type);
-    switch (category) {
-      case 'image': return <FileImage className="h-8 w-8 text-primary" />;
-      case 'video': return <FileVideo className="h-8 w-8 text-primary" />;
-      case 'audio': return <Music className="h-8 w-8 text-primary" />;
-      default: return <Upload className="h-8 w-8 text-primary" />;
-    }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const getStageText = () => {
-    switch (analysisStage) {
-      case 'uploading': return 'Uploading file...';
-      case 'processing': return 'Analyzing content...';
-      case 'complete': return 'Analysis complete!';
-      default: return 'Processing...';
-    }
-  };
+  }
 
   return (
-    <Card className="p-6 glass-effect">
-      <div className="space-y-4">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-foreground">Upload Media for Analysis</h3>
-          <p className="text-sm text-muted-foreground">
-            Support for images, videos, and audio files (max 10MB)
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* File Upload Area */}
+      <div
+        className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${
+          isDragOver
+            ? 'border-primary bg-primary/10 scale-105 shadow-lg'
+            : dragActive
+            ? 'border-primary bg-primary/5 scale-102'
+            : 'border-border hover:border-primary/50 hover:bg-primary/5'
+        }`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          onChange={handleFileSelect}
+          accept="image/*,video/*,audio/*"
+          className="hidden"
+        />
 
-        {!selectedFile ? (
-          <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${
-              isDragOver
-                ? 'border-primary bg-primary/5 scale-105'
-                : 'border-border hover:border-primary/50 hover:bg-primary/5'
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4 transition-colors" />
-            <p className="text-foreground font-medium mb-2">
-              Drag and drop your file here
-            </p>
-            <p className="text-sm text-muted-foreground mb-4">
-              or click to browse
-            </p>
+        {!file ? (
+          <div className="space-y-4">
+            <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
+              isDragOver 
+                ? 'bg-primary/20 scale-110' 
+                : 'bg-primary/10'
+            }`}>
+              <Upload className={`h-8 w-8 transition-all duration-300 ${
+                isDragOver ? 'text-primary scale-110' : 'text-primary'
+              }`} />
+            </div>
+            <div>
+              <Text size="lg" weight="semibold" className="mb-2">
+                {isDragOver ? 'Drop your file here!' : 'Drop your file here or click to browse'}
+              </Text>
+              <Caption className="mb-4">
+                Supports images, videos, and audio files up to 10MB
+              </Caption>
+            </div>
             <Button
-              variant="outline"
               onClick={() => fileInputRef.current?.click()}
-              className="mx-auto hover:bg-primary hover:text-primary-foreground transition-colors"
+              variant="outline"
+              className="hover:bg-primary hover:text-primary-foreground transition-colors"
             >
               Choose File
             </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept={ALL_SUPPORTED_TYPES.join(',')}
-              onChange={handleFileInputChange}
-            />
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg">
-              <div className="flex items-center space-x-3">
-                {getFileIcon(selectedFile)}
-                <div>
-                  <p className="font-medium text-foreground">{selectedFile.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatFileSize(selectedFile.size)} • {getFileCategory(selectedFile.type)}
-                  </p>
-                </div>
+            <div className="flex items-center justify-center space-x-3">
+              {getFileIcon(file)}
+              <div className="text-left">
+                <Text weight="semibold">{file.name}</Text>
+                <Caption>
+                  {getFileType(file)} • {formatFileSize(file.size)}
+                </Caption>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFile}
-                disabled={isAnalyzing}
-                className="hover:bg-red-100 hover:text-red-600"
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
-
-            {isAnalyzing && (
-              <div className="space-y-4 p-4 bg-secondary/10 rounded-lg">
-                <div className="flex items-center justify-center space-x-3">
-                  {analysisStage === 'complete' ? (
-                    <CheckCircle className="h-6 w-6 text-green-500 animate-pulse" />
-                  ) : (
-                    <LoadingSpinner size="md" text={getStageText()} />
-                  )}
-                </div>
-                
-                {analysisStage !== 'complete' && (
-                  <ProgressBar 
-                    value={uploadProgress} 
-                    variant={uploadProgress > 80 ? 'success' : 'default'}
-                    className="max-w-md mx-auto"
-                  />
-                )}
-                
-                {analysisStage === 'complete' && (
-                  <div className="text-center text-green-600 font-medium">
-                    Redirecting to results...
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!isAnalyzing && (
-              <Button
-                onClick={analyzeFile}
-                className="w-full hover:bg-primary/90 transition-colors"
-              >
-                <Shield className="h-4 w-4 mr-2" />
-                Analyze for Deepfakes
-              </Button>
-            )}
-          </div>
-        )}
-
-        {error && (
-          <InlineError
-            message={error}
-            type="error"
-            onRetry={retryCount < 3 ? retryAnalysis : undefined}
-            className="mt-4"
-          />
-        )}
-
-        {retryCount >= 3 && (
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              Multiple attempts failed. Please check your connection or try again later.
-            </p>
+            <Button
+              onClick={removeFile}
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Remove File
+            </Button>
           </div>
         )}
       </div>
-    </Card>
-  );
+
+      {/* Error Display */}
+      {error && (
+        <InlineError
+          message={error}
+          onRetry={retryCount < maxRetries ? retryAnalysis : undefined}
+        />
+      )}
+
+      {/* Analysis Progress */}
+      {isAnalyzing && (
+        <Card className="glass-effect border-primary/20">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Text weight="semibold">Analysis in Progress</Text>
+                <Badge variant="secondary">
+                  {analysisStage === 'uploading' && 'Uploading...'}
+                  {analysisStage === 'processing' && 'Processing...'}
+                  {analysisStage === 'complete' && 'Complete!'}
+                </Badge>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>
+                    {analysisStage === 'uploading' && 'Uploading file...'}
+                    {analysisStage === 'processing' && 'Analyzing content...'}
+                    {analysisStage === 'complete' && 'Analysis complete!'}
+                  </span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+
+              <LoadingSpinner
+                size="sm"
+                text={analysisStage === 'complete' ? 'Analysis Complete!' : 'Processing...'}
+                showProgress={false}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Analysis Button */}
+      {file && !isAnalyzing && (
+        <div className="flex justify-center">
+          <Button
+            onClick={handleAnalyze}
+            size="lg"
+            className="min-w-[200px] hover:scale-105 transition-transform shadow-lg"
+            disabled={isAnalyzing}
+          >
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <Camera className="mr-2 h-5 w-5" />
+                Analyze File
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* File Info */}
+      {file && (
+        <Card className="glass-effect border-green-200/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                {getFileIcon(file)}
+                <div>
+                  <Text weight="medium">{file.name}</Text>
+                  <Caption>
+                    {getFileType(file)} • {formatFileSize(file.size)}
+                  </Caption>
+                </div>
+              </div>
+              <Badge variant="outline" className="bg-green-50">
+                {file.type}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
+    </div>
+  )
 }

@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { Shield, Upload, Camera, BarChart3, User, LogOut, Crown, Zap, AlertCircle, CheckCircle, FileText, Menu } from 'lucide-react'
+import { Shield, Upload, Camera, BarChart3, User, LogOut, Crown, Zap, AlertCircle, CheckCircle, FileText, Menu, TrendingUp, TrendingDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { FileUpload } from '@/components/FileUpload'
+import FileUpload from '@/components/FileUpload'
 import { CameraCapture } from '@/components/CameraCapture'
 import { AnalysisSuccess } from '@/components/AnalysisSuccess'
 import { MobileNav, MobileHeader } from '@/components/ui/mobile-nav'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { Breadcrumb } from '@/components/ui/breadcrumb'
+
+import { Text, Caption } from '@/components/ui/typography'
 import { AnalysisResult } from '@shared/api'
 import { trackAnalysis, saveAnalysisToHistory } from '@/lib/supabase'
 
@@ -40,7 +43,7 @@ export default function Dashboard() {
           name: 'Pro',
           icon: <Zap className="h-4 w-4" />,
           color: 'bg-primary text-primary-foreground',
-          features: ['500 analyses/month', 'All detection models', '50MB file limit', 'API access']
+          features: ['500 analyses/month', 'All detection models', '10MB file limit', 'API access']
         }
       case 'enterprise':
         return {
@@ -66,6 +69,10 @@ export default function Dashboard() {
   }
 
   const handleAnalysisComplete = async (result: AnalysisResult) => {
+    console.log('🔍 Analysis Result received:', result)
+    console.log('🔍 Result type:', result.type)
+    console.log('🔍 Result structure:', JSON.stringify(result, null, 2))
+    
     const newResults = [result, ...results]
     setResults(newResults)
     setIsAnalyzing(false)
@@ -166,8 +173,10 @@ export default function Dashboard() {
                 <Shield className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">DeepGuard Dashboard</h1>
-                <p className="text-sm text-muted-foreground">Welcome back, {profile?.full_name || user?.email}</p>
+                                          <div>
+                  <h1 className="text-xl font-bold text-foreground">DeepGuard Dashboard</h1>
+                  <p className="text-sm text-muted-foreground">Welcome back, {profile?.full_name || user?.email}</p>
+                </div>
               </div>
             </div>
             
@@ -209,6 +218,11 @@ export default function Dashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb Navigation */}
+        <div className="mb-6">
+          <Breadcrumb />
+        </div>
+
         {/* Usage Alert */}
         {!canAnalyze && (
           <Alert className="mb-6 border-warning/50 bg-warning/10">
@@ -265,6 +279,10 @@ export default function Dashboard() {
                   <div>
                     <p className="text-sm text-muted-foreground">Authentic</p>
                     <p className="text-xl md:text-2xl font-bold text-success">{getAuthenticCount()}</p>
+                    <div className="flex items-center mt-2">
+                      <span className="text-xs font-medium text-green-600">+12%</span>
+                      <span className="text-xs text-muted-foreground ml-1">from last month</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -277,6 +295,10 @@ export default function Dashboard() {
                   <div>
                     <p className="text-sm text-muted-foreground">Deepfakes</p>
                     <p className="text-xl md:text-2xl font-bold text-danger">{getDeepfakeCount()}</p>
+                    <div className="flex items-center mt-2">
+                      <span className="text-xs font-medium text-red-600">+8%</span>
+                      <span className="text-xs text-muted-foreground ml-1">from last month</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -298,36 +320,36 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <Card className="glass-effect">
+            <Card className="glass-effect border-primary/20 bg-primary/5 hover:shadow-lg transition-all duration-300 hover:scale-105">
               <CardContent className="p-6 text-center">
-                <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                   <Camera className="h-6 w-6 text-blue-600" />
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">Upload Images</h3>
+                <CardTitle className="text-lg mb-2">Upload Images</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Upload photos to detect face-swap deepfakes and AI-generated content
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-effect">
+            <Card className="glass-effect border-green-500/30 bg-green-500/10 hover:shadow-lg transition-all duration-300 hover:scale-105">
               <CardContent className="p-6 text-center">
-                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <div className="mx-auto w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
                   <FileText className="h-6 w-6 text-green-600" />
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">Analyze Videos</h3>
+                <CardTitle className="text-lg mb-2">Analyze Videos</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Check video files for temporal inconsistencies and manipulation
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-effect">
+            <Card className="glass-effect border-yellow-500/30 bg-yellow-500/10 hover:shadow-lg transition-all duration-300 hover:scale-105">
               <CardContent className="p-6 text-center">
-                <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                <div className="mx-auto w-12 h-12 bg-yellow-500/10 rounded-full flex items-center justify-center mb-4">
                   <Zap className="h-6 w-6 text-purple-600" />
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">Audio Detection</h3>
+                <CardTitle className="text-lg mb-2">Audio Detection</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Detect synthetic voices and audio deepfakes with AI analysis
                 </p>
@@ -340,14 +362,17 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Analysis Tools */}
           <div className="lg:col-span-2">
-            <Card className="glass-effect">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5" />
-                  <span>Deepfake Detection Tools</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                      <div className="text-center mb-16">
+            <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4">
+              Deepfake Detection Tools
+            </h2>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
+              Choose your preferred method to analyze media for deepfakes
+            </p>
+          </div>
+            
+            <Card className="glass-effect mt-4">
+              <CardContent className="p-6">
                 {canAnalyze ? (
                   <Tabs defaultValue="upload" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
@@ -378,10 +403,10 @@ export default function Dashboard() {
                 ) : (
                   <div className="text-center py-8">
                     <AlertCircle className="h-12 w-12 text-warning mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-foreground mb-2">Usage Limit Reached</h3>
-                    <p className="text-muted-foreground mb-4">
+                    <Text size="lg" weight="semibold" className="mb-2">Usage Limit Reached</Text>
+                    <Text className="mb-4">
                       You've used all your monthly analyses. Upgrade to continue detecting deepfakes.
-                    </p>
+                    </Text>
                     <Button onClick={() => navigate('/pricing')}>Upgrade Plan</Button>
                   </div>
                 )}
@@ -391,26 +416,25 @@ export default function Dashboard() {
             {/* Welcome Section - Only show when no results */}
             {results.length === 0 && (
               <Card className="glass-effect mt-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Shield className="h-5 w-5" />
-                    <span>Welcome to DeepGuard</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Start protecting yourself from deepfakes and AI-generated content. 
-                      Upload your first file to begin analysis.
-                    </p>
-                    <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-4 rounded-lg">
-                      <h4 className="font-semibold text-sm mb-2">What we detect:</h4>
-                      <ul className="text-xs text-muted-foreground space-y-1">
-                        <li>• Face-swap deepfakes</li>
-                        <li>• AI-generated images</li>
-                        <li>• Synthetic voice cloning</li>
-                        <li>• Video manipulation</li>
-                      </ul>
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      <Shield className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg mb-2">Welcome to DeepGuard</CardTitle>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Start protecting yourself from deepfakes and AI-generated content. Upload your first file to begin analysis.
+                      </p>
+                      <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-4 rounded-lg">
+                        <Text size="sm" weight="semibold" className="mb-2">What we detect:</Text>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          <li>• Face-swap deepfakes</li>
+                          <li>• AI-generated images</li>
+                          <li>• Synthetic voice cloning</li>
+                          <li>• Video manipulation</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -418,31 +442,33 @@ export default function Dashboard() {
             )}
 
             {/* Current Plan Info */}
-            <Card className="glass-effect mt-6">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="h-5 w-5" />
-                  <span>Current Plan</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                  <Badge className={tierInfo.color}>
-                    {tierInfo.icon}
-                    <span className="ml-1">{tierInfo.name} Plan</span>
+            <Card className="glass-effect mt-6 border-blue-500/20 bg-blue-500/5">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <CardTitle className="text-base">Current Plan</CardTitle>
+                  <Badge className="bg-blue-500 text-white" variant="secondary">
+                    {tierInfo.name}
                   </Badge>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
-                    Upgrade Plan
-                  </Button>
                 </div>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  {tierInfo.features.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <CheckCircle className="h-4 w-4 text-success mr-2 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Badge className={tierInfo.color}>
+                      {tierInfo.icon}
+                      <span className="ml-1">{tierInfo.name} Plan</span>
+                    </Badge>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
+                      Upgrade Plan
+                    </Button>
+                  </div>
+                  <ul className="space-y-2">
+                    {tierInfo.features.map((feature, index) => (
+                      <li key={index} className="flex items-center">
+                        <CheckCircle className="h-4 w-4 text-success mr-2 flex-shrink-0" />
+                        <Text size="sm">{feature}</Text>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -462,7 +488,7 @@ export default function Dashboard() {
                   <div className="space-y-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-primary mb-1">{results.length}</div>
-                      <p className="text-sm text-muted-foreground">Analyses Completed</p>
+                      <Caption>Analyses Completed</Caption>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-2 text-sm">
@@ -499,39 +525,44 @@ export default function Dashboard() {
               <div className="space-y-6">
                 {/* Quick Start Guide */}
                 <Card className="glass-effect">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Shield className="h-5 w-5" />
-                      <span>Quick Start</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
-                          1
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Upload a file</p>
-                          <p className="text-xs text-muted-foreground">Choose an image, video, or audio file</p>
-                        </div>
+                  <CardContent className="p-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="flex-shrink-0">
+                        <Shield className="h-5 w-5 text-primary" />
                       </div>
-                      <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
-                          2
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">AI Analysis</p>
-                          <p className="text-xs text-muted-foreground">Our AI will analyze the content</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
-                          3
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">Get Results</p>
-                          <p className="text-xs text-muted-foreground">View detailed analysis report</p>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg mb-2">Quick Start</CardTitle>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Get started with DeepGuard in three simple steps
+                        </p>
+                        <div className="space-y-3">
+                          <div className="flex items-start space-x-3">
+                            <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
+                              1
+                            </div>
+                            <div>
+                              <Text size="sm" weight="medium">Upload a file</Text>
+                              <Caption>Choose an image, video, or audio file</Caption>
+                            </div>
+                          </div>
+                          <div className="flex items-start space-x-3">
+                            <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
+                              2
+                            </div>
+                            <div>
+                              <Text size="sm" weight="medium">AI Analysis</Text>
+                              <Caption>Our AI will analyze the content</Caption>
+                            </div>
+                          </div>
+                          <div className="flex items-start space-x-3">
+                            <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
+                              3
+                            </div>
+                            <div>
+                              <Text size="sm" weight="medium">Get Results</Text>
+                              <Caption>View detailed analysis report</Caption>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -539,52 +570,52 @@ export default function Dashboard() {
                 </Card>
 
                 {/* Supported Formats */}
-                <Card className="glass-effect">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <FileText className="h-5 w-5" />
-                      <span>Supported Formats</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                <Card className="glass-effect mt-6 border-blue-500/20 bg-blue-500/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <CardTitle className="text-base">Supported Formats</CardTitle>
+                      <Badge className="bg-blue-500 text-white" variant="secondary">
+                        Info
+                      </Badge>
+                    </div>
                     <div className="space-y-3">
                       <div>
-                        <p className="text-sm font-medium text-blue-600">Images</p>
-                        <p className="text-xs text-muted-foreground">JPEG, PNG, WebP (max 10MB)</p>
+                        <Text size="sm" weight="medium" color="primary">Images</Text>
+                        <Caption>JPEG, PNG, WebP (max 10MB)</Caption>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-green-600">Videos</p>
-                        <p className="text-xs text-muted-foreground">MP4, WebM, MOV (max 10MB)</p>
+                        <Text size="sm" weight="medium" color="success">Videos</Text>
+                        <Caption>MP4, WebM, MOV (max 10MB)</Caption>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-purple-600">Audio</p>
-                        <p className="text-xs text-muted-foreground">WAV, MP3, M4A, OGG (max 10MB)</p>
+                        <Text size="sm" weight="medium" color="warning">Audio</Text>
+                        <Caption>WAV, MP3, M4A, OGG (max 10MB)</Caption>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* Tips */}
-                <Card className="glass-effect">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Zap className="h-5 w-5" />
-                      <span>Pro Tips</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                <Card className="glass-effect mt-6 border-green-500/20 bg-green-500/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <CardTitle className="text-base">Pro Tips</CardTitle>
+                      <Badge className="bg-green-500 text-white" variant="secondary">
+                        Success
+                      </Badge>
+                    </div>
                     <div className="space-y-2">
                       <div className="flex items-start space-x-2">
                         <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-xs text-muted-foreground">Higher resolution images provide better accuracy</p>
+                        <Caption>Higher resolution images provide better accuracy</Caption>
                       </div>
                       <div className="flex items-start space-x-2">
                         <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-xs text-muted-foreground">Use live camera for real-time analysis</p>
+                        <Caption>Use live camera for real-time analysis</Caption>
                       </div>
                       <div className="flex items-start space-x-2">
                         <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                        <p className="text-xs text-muted-foreground">Check results page for detailed insights</p>
+                        <Caption>Check results page for detailed insights</Caption>
                       </div>
                     </div>
                   </CardContent>

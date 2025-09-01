@@ -44,6 +44,7 @@ export default function AnalysisResults() {
   const [currentResult, setCurrentResult] = useState<AnalysisResult | null>(null)
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false)
   const [selectedTab, setSelectedTab] = useState('overview')
+  const [isLoading, setIsLoading] = useState(true)
 
   // Get results from navigation state or localStorage
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function AnalysisResults() {
     if (state?.results) {
       setResults(state.results)
       setCurrentResult(state.currentResult || state.results[0])
+      setIsLoading(false)
     } else {
       // Fallback to localStorage if no state
       const savedResults = localStorage.getItem('analysisResults')
@@ -58,6 +60,9 @@ export default function AnalysisResults() {
         const parsedResults = JSON.parse(savedResults) as AnalysisResult[]
         setResults(parsedResults)
         setCurrentResult(parsedResults[0])
+        setIsLoading(false)
+      } else {
+        setIsLoading(false)
       }
     }
   }, [location.state])
@@ -127,7 +132,7 @@ export default function AnalysisResults() {
 
     const shareData = {
       title: 'Deepfake Analysis Results',
-      text: `Analysis Result: ${currentResult.isDeepfake ? 'DEEPFAKE DETECTED' : 'AUTHENTIC'} (${Math.round(currentResult.confidence * 100)}% confidence)`,
+              text: `Analysis Result: ${currentResult?.isDeepfake ? 'DEEPFAKE DETECTED' : 'AUTHENTIC'} (${Math.round((currentResult?.confidence || 0) * 100)}% confidence)`,
       url: window.location.href,
     }
 
@@ -160,6 +165,36 @@ export default function AnalysisResults() {
     )
   }
 
+  // Show loading state while data is being fetched
+  if (isLoading) {
+    return (
+      <div className="min-h-screen gradient-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading analysis results...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state if no results
+  if (!currentResult || results.length === 0) {
+    return (
+      <div className="min-h-screen gradient-bg flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-warning mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2">No Results Found</h1>
+          <p className="text-muted-foreground mb-4">
+            No analysis results were found. Please run an analysis first.
+          </p>
+          <Button onClick={() => navigate('/dashboard')}>
+            Back to Dashboard
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen gradient-bg">
       <TooltipProvider>
@@ -179,7 +214,7 @@ export default function AnalysisResults() {
               <div>
                 <h1 className="text-2xl font-bold">Analysis Results</h1>
                 <p className="text-muted-foreground">
-                  {currentResult.type.toUpperCase()} Analysis • {new Date().toLocaleDateString()}
+                  {currentResult?.type?.toUpperCase() || 'Loading...'} Analysis • {new Date().toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -204,21 +239,21 @@ export default function AnalysisResults() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      {getAnalysisIcon(currentResult.type)}
+                      {getAnalysisIcon(currentResult?.type || 'unknown')}
                       <div>
                         <CardTitle className="text-xl">
-                          {currentResult.isDeepfake ? 'Deepfake Detected' : 'Authentic Content'}
+                          {currentResult?.isDeepfake ? 'Deepfake Detected' : 'Authentic Content'}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">
-                          {currentResult.type.toUpperCase()} Analysis
+                          {currentResult?.type?.toUpperCase() || 'Loading...'} Analysis
                         </p>
                       </div>
                     </div>
                     <Badge 
                       variant="outline" 
-                      className={getRiskLevelColor(currentResult.riskLevel)}
+                      className={getRiskLevelColor(currentResult?.riskLevel || 'UNKNOWN')}
                     >
-                      {currentResult.riskLevel} RISK
+                      {currentResult?.riskLevel || 'UNKNOWN'} RISK
                     </Badge>
                   </div>
                 </CardHeader>
@@ -227,13 +262,13 @@ export default function AnalysisResults() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">Confidence Score</span>
-                      <span className={`text-lg font-bold ${getConfidenceColor(currentResult.confidence * 100)}`}>
-                        {Math.round(currentResult.confidence * 100)}%
+                      <span className={`text-lg font-bold ${getConfidenceColor((currentResult?.confidence || 0) * 100)}`}>
+                        {Math.round((currentResult?.confidence || 0) * 100)}%
                       </span>
                     </div>
-                    <Progress value={currentResult.confidence * 100} className="h-3" />
+                    <Progress value={(currentResult?.confidence || 0) * 100} className="h-3" />
                     <p className="text-xs text-muted-foreground mt-1">
-                      {currentResult.confidenceCategory.replace('_', ' ')} confidence
+                      {(currentResult?.confidenceCategory || 'UNKNOWN').replace('_', ' ')} confidence
                     </p>
                   </div>
 
@@ -241,18 +276,18 @@ export default function AnalysisResults() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-3 bg-muted rounded-lg">
                       <div className="text-2xl font-bold text-primary">
-                        {currentResult.isDeepfake ? '⚠️' : '✅'}
+                        {currentResult?.isDeepfake ? '⚠️' : '✅'}
                       </div>
                       <div className="text-sm font-medium">
-                        {currentResult.isDeepfake ? 'Deepfake' : 'Authentic'}
+                        {currentResult?.isDeepfake ? 'Deepfake' : 'Authentic'}
                       </div>
                     </div>
                     <div className="text-center p-3 bg-muted rounded-lg">
                       <div className="text-2xl font-bold text-primary">
-                        {currentResult.analysisQuality === 'DEMO' ? '🧪' : '🔬'}
+                        {(currentResult?.analysisQuality || 'UNKNOWN') === 'DEMO' ? '🧪' : '🔬'}
                       </div>
                       <div className="text-sm font-medium">
-                        {currentResult.analysisQuality} Analysis
+                        {currentResult?.analysisQuality || 'UNKNOWN'} Analysis
                       </div>
                     </div>
                   </div>
@@ -261,12 +296,14 @@ export default function AnalysisResults() {
                   <div>
                     <h3 className="font-semibold mb-3">Key Findings</h3>
                     <div className="space-y-2">
-                      {currentResult.recommendations.slice(0, 3).map((rec, index) => (
+                      {currentResult?.recommendations?.slice(0, 3).map((rec, index) => (
                         <div key={index} className="flex items-start space-x-2">
                           <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                           <span className="text-sm">{rec}</span>
                         </div>
-                      ))}
+                      )) || (
+                        <p className="text-sm text-muted-foreground">No key findings available</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -293,29 +330,31 @@ export default function AnalysisResults() {
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
                               <span>API Provider:</span>
-                              <span className="font-medium">{currentResult.processingDetails.apiProvider}</span>
+                              <span className="font-medium">{currentResult?.processingDetails?.apiProvider || 'Unknown'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Models Used:</span>
-                              <span className="font-medium">{currentResult.processingDetails.modelsUsed.join(', ')}</span>
+                              <span className="font-medium">{currentResult?.processingDetails?.modelsUsed?.join(', ') || 'Unknown'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Quality Score:</span>
-                              <span className="font-medium">{Math.round(currentResult.processingDetails.qualityScore * 100)}%</span>
+                              <span className="font-medium">{Math.round((currentResult?.processingDetails?.qualityScore || 0) * 100)}%</span>
                             </div>
                           </div>
                         </div>
                         <div>
                           <h4 className="font-semibold mb-2">Confidence Factors</h4>
                           <div className="space-y-2">
-                            {currentResult.processingDetails.confidenceFactors.map((factor, index) => (
+                            {currentResult?.processingDetails?.confidenceFactors?.map((factor, index) => (
                               <div key={index} className="flex items-center justify-between text-sm">
                                 <span>{factor.factor}:</span>
                                 <Badge variant="outline" className="text-xs">
                                   {factor.impact}
                                 </Badge>
                               </div>
-                            ))}
+                            )) || (
+                              <p className="text-sm text-muted-foreground">No confidence factors available</p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -324,7 +363,7 @@ export default function AnalysisResults() {
                     <TabsContent value="technical" className="space-y-4">
                       <div>
                         <h4 className="font-semibold mb-3">Technical Analysis</h4>
-                        {currentResult.type === 'image' && currentResult.imageAnalysis && (
+                        {currentResult?.type === 'image' && currentResult?.imageAnalysis && (
                           <div className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <Card>
@@ -335,11 +374,11 @@ export default function AnalysisResults() {
                                   <div className="space-y-2 text-sm">
                                     <div className="flex justify-between">
                                       <span>Faces Detected:</span>
-                                      <span>{currentResult.imageAnalysis.faceDetection.facesDetected}</span>
+                                      <span>{currentResult?.imageAnalysis?.faceDetection?.facesDetected || 0}</span>
                                     </div>
                                     <div className="flex justify-between">
                                       <span>Face Quality:</span>
-                                      <span>{Math.round(currentResult.imageAnalysis.faceDetection.faceQuality * 100)}%</span>
+                                      <span>{Math.round((currentResult?.imageAnalysis?.faceDetection?.faceQuality || 0) * 100)}%</span>
                                     </div>
                                   </div>
                                 </CardContent>
@@ -352,11 +391,11 @@ export default function AnalysisResults() {
                                   <div className="space-y-2 text-sm">
                                     <div className="flex justify-between">
                                       <span>Compression Artifacts:</span>
-                                      <span>{Math.round(currentResult.imageAnalysis.manipulationIndicators.compressionArtifacts * 100)}%</span>
+                                      <span>{Math.round((currentResult?.imageAnalysis?.manipulationIndicators?.compressionArtifacts || 0) * 100)}%</span>
                                     </div>
                                     <div className="flex justify-between">
                                       <span>Editing Signs:</span>
-                                      <span>{Math.round(currentResult.imageAnalysis.manipulationIndicators.editingSigns * 100)}%</span>
+                                      <span>{Math.round((currentResult?.imageAnalysis?.manipulationIndicators?.editingSigns || 0) * 100)}%</span>
                                     </div>
                                   </div>
                                 </CardContent>
@@ -372,7 +411,7 @@ export default function AnalysisResults() {
                         <h4 className="font-semibold mb-3">File Metadata</h4>
                         <div className="bg-muted p-4 rounded-lg">
                           <pre className="text-sm overflow-x-auto">
-                            {JSON.stringify(currentResult.metadata, null, 2)}
+                            {JSON.stringify(currentResult?.metadata || {}, null, 2)}
                           </pre>
                         </div>
                       </div>
@@ -393,7 +432,7 @@ export default function AnalysisResults() {
                       {showTechnicalDetails && (
                         <div className="bg-muted p-4 rounded-lg">
                           <pre className="text-xs overflow-x-auto">
-                            {JSON.stringify(currentResult, null, 2)}
+                            {JSON.stringify(currentResult || {}, null, 2)}
                           </pre>
                         </div>
                       )}
@@ -425,20 +464,20 @@ export default function AnalysisResults() {
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
-                              {getAnalysisIcon(result.type)}
+                              {getAnalysisIcon(result?.type || 'unknown')}
                               <span className="text-sm font-medium">
-                                {result.type.toUpperCase()}
+                                {result?.type?.toUpperCase() || 'UNKNOWN'}
                               </span>
                             </div>
                             <Badge 
                               variant="outline" 
-                              className={result.isDeepfake ? 'border-red-200 text-red-700' : 'border-green-200 text-green-700'}
+                              className={result?.isDeepfake ? 'border-red-200 text-red-700' : 'border-green-200 text-green-700'}
                             >
-                              {result.isDeepfake ? 'Fake' : 'Real'}
+                              {result?.isDeepfake ? 'Fake' : 'Real'}
                             </Badge>
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {Math.round(result.confidence * 100)}% confidence
+                            {Math.round((result?.confidence || 0) * 100)}% confidence
                           </div>
                         </button>
                       ))}
@@ -454,12 +493,14 @@ export default function AnalysisResults() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {currentResult.recommendations.map((rec, index) => (
+                    {currentResult?.recommendations?.map((rec, index) => (
                       <div key={index} className="flex items-start space-x-2">
                         <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{rec}</span>
                       </div>
-                    ))}
+                    )) || (
+                      <p className="text-sm text-muted-foreground">No recommendations available</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -479,11 +520,13 @@ export default function AnalysisResults() {
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-3">
                       <div className="space-y-2">
-                        {currentResult.limitations.map((limitation, index) => (
+                        {currentResult?.limitations?.map((limitation, index) => (
                           <div key={index} className="text-sm text-muted-foreground">
                             • {limitation}
                           </div>
-                        ))}
+                        )) || (
+                          <p className="text-sm text-muted-foreground">No limitations documented</p>
+                        )}
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
@@ -499,18 +542,18 @@ export default function AnalysisResults() {
                   <div className="space-y-3 text-sm">
                     <div className="flex items-center justify-between">
                       <span>Analysis Time:</span>
-                      <span className="font-medium">{currentResult.analysisTime}ms</span>
+                      <span className="font-medium">{currentResult?.analysisTime || 0}ms</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Analysis Quality:</span>
                       <Badge variant="outline" className="text-xs">
-                        {currentResult.analysisQuality}
+                        {currentResult?.analysisQuality || 'Unknown'}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Risk Level:</span>
-                      <Badge variant="outline" className={`text-xs ${getRiskLevelColor(currentResult.riskLevel)}`}>
-                        {currentResult.riskLevel}
+                      <Badge variant="outline" className={`text-xs ${getRiskLevelColor(currentResult?.riskLevel || 'UNKNOWN')}`}>
+                        {currentResult?.riskLevel || 'UNKNOWN'}
                       </Badge>
                     </div>
                   </div>

@@ -1030,7 +1030,12 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             confidence: apiResponse.deepfake.prob,
             analysisTime: Date.now() - startTime,
             sightengineData: apiResponse,
-            metadata: apiResponse.metadata,
+            metadata: {
+              ...apiResponse.metadata,
+              file_name: req.file.originalname,
+              file_size: req.file.size,
+              file_type: req.file.mimetype
+            },
             // Enhanced fields - now properly extracted from enhanced response
             riskLevel: apiResponse.riskLevel,
             confidenceCategory: apiResponse.confidenceCategory,
@@ -1056,7 +1061,12 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             confidence: apiResponse.deepfake.prob,
             analysisTime: Date.now() - startTime,
             sightengineData: apiResponse,
-            metadata: apiResponse.metadata,
+            metadata: {
+              ...apiResponse.metadata,
+              file_name: req.file.originalname,
+              file_size: req.file.size,
+              file_type: req.file.mimetype
+            },
             // Enhanced fields - now properly extracted from enhanced response
             riskLevel: apiResponse.riskLevel,
             confidenceCategory: apiResponse.confidenceCategory,
@@ -1085,7 +1095,12 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             confidence: apiResponse.confidence,
             analysisTime: Date.now() - startTime,
             resembleData: apiResponse,
-            metadata: apiResponse.metadata,
+            metadata: {
+              ...apiResponse.metadata,
+              file_name: req.file.originalname,
+              file_size: req.file.size,
+              file_type: req.file.mimetype
+            },
             // Enhanced fields - now properly extracted from enhanced response
             riskLevel: apiResponse.riskLevel,
             confidenceCategory: apiResponse.confidenceCategory,

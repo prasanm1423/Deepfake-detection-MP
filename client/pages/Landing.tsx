@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/accordion'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useState } from 'react'
+import { Text, Caption } from '@/components/ui/typography'
+import { cn } from '@/lib/utils'
 
 export default function Landing() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -29,7 +31,7 @@ export default function Landing() {
     {
       icon: <Upload className="h-8 w-8 text-primary" />,
       title: "Multi-format Support",
-      description: "Support for images (JPEG, PNG, WebP), videos (MP4, WebM, MOV), and audio files (WAV, MP3, M4A, OGG) up to 50MB."
+              description: "Support for images (JPEG, PNG, WebP), videos (MP4, WebM, MOV), and audio files (WAV, MP3, M4A, OGG) up to 10MB."
     },
     {
       icon: <BarChart3 className="h-8 w-8 text-primary" />,
@@ -71,7 +73,7 @@ export default function Landing() {
       features: [
         "500 analyses per month",
         "All detection models",
-        "50MB file size limit",
+        "10MB file size limit",
         "API access",
         "Priority support",
         "Batch processing"
@@ -87,7 +89,7 @@ export default function Landing() {
       features: [
         "Unlimited analyses",
         "Custom model training",
-        "100MB file size limit",
+        "10MB file size limit",
         "Dedicated support",
         "SLA guarantees",
         "On-premise deployment"
@@ -110,6 +112,13 @@ export default function Landing() {
       title: 'Journalism & Fact-Checking',
       description: 'Verify source media quickly with confidence scores and technical signals for editorial workflows.'
     }
+  ]
+
+  const stats = [
+    { label: "Analyses Completed", value: "50K+", trend: 15, isPositive: true },
+    { label: "Accuracy Rate", value: "99.2%", trend: 2.1, isPositive: true },
+    { label: "Response Time", value: "<2s", trend: -0.5, isPositive: true },
+    { label: "Customer Satisfaction", value: "4.9/5", trend: 0.1, isPositive: true }
   ]
 
   return (
@@ -254,6 +263,35 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Stats Section */}
+      <section className="py-16 px-4 bg-secondary/5">
+        <div className="container mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {stats.map((stat, index) => (
+              <Card key={index} className="glass-effect text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                      <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                      <div className="flex items-center mt-2">
+                        <span className={cn(
+                          'text-xs font-medium',
+                          stat.isPositive ? 'text-green-600' : 'text-red-600'
+                        )}>
+                          {stat.isPositive ? '+' : ''}{stat.trend}%
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-1">from last month</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section id="features" className="py-16 md:py-20 px-4 bg-secondary/5">
         <div className="container mx-auto">
@@ -266,16 +304,14 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mt-16">
             {features.map((feature, index) => (
               <Card key={index} className="h-full hover:shadow-lg transition-all duration-300 hover:scale-105">
-                <CardHeader>
+                <CardContent className="p-6 text-center">
                   <div className="mb-4">
                     {feature.icon}
                   </div>
                   <CardTitle className="text-lg md:text-xl">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
                   <p className="text-muted-foreground text-sm md:text-base">{feature.description}</p>
                 </CardContent>
               </Card>
@@ -291,14 +327,14 @@ export default function Landing() {
             <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4">Built for Real-World Workflows</h2>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">Practical applications to help teams detect and prevent manipulated media across the content lifecycle.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto mt-16">
             {useCases.map((c, i) => (
               <Card key={i} className="h-full hover:shadow-lg transition-all duration-300 hover:scale-105">
                 <CardHeader>
                   <CardTitle className="text-lg md:text-xl">{c.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground text-sm md:text-base">{c.description}</p>
+                  <Text size="sm" color="muted">{c.description}</Text>
                 </CardContent>
               </Card>
             ))}
@@ -317,7 +353,7 @@ export default function Landing() {
               Choose the plan that fits your needs. Upgrade or downgrade at any time.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto mt-16">
             {pricingTiers.map((tier, index) => (
               <Card key={index} className={`relative h-full transition-all duration-300 hover:scale-105 ${
                 tier.popular ? 'border-primary shadow-lg scale-105 md:scale-110' : 'hover:shadow-lg'
@@ -333,14 +369,14 @@ export default function Landing() {
                     <span className="text-3xl md:text-4xl font-bold text-foreground">{tier.price}</span>
                     <span className="text-muted-foreground">{tier.period}</span>
                   </div>
-                  <p className="text-muted-foreground mt-2 text-sm md:text-base">{tier.description}</p>
+                  <Text size="sm" color="muted" className="mt-2">{tier.description}</Text>
                 </CardHeader>
                 <CardContent className="flex-1">
                   <ul className="space-y-3 mb-8">
                     {tier.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center">
                         <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-primary mr-3 flex-shrink-0" />
-                        <span className="text-sm md:text-base text-foreground">{feature}</span>
+                        <Text size="sm">{feature}</Text>
                       </li>
                     ))}
                   </ul>
@@ -363,7 +399,7 @@ export default function Landing() {
             <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4">Frequently Asked Questions</h2>
             <p className="text-lg md:text-xl text-muted-foreground px-4">Quick answers to common questions about DeepGuard.</p>
           </div>
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full mt-16">
             <AccordionItem value="item-1">
               <AccordionTrigger className="text-left">Is my uploaded content stored permanently?</AccordionTrigger>
               <AccordionContent>
@@ -379,7 +415,7 @@ export default function Landing() {
             <AccordionItem value="item-3">
               <AccordionTrigger className="text-left">What file types and sizes are supported?</AccordionTrigger>
               <AccordionContent>
-                Images (JPEG, PNG, WebP), videos (MP4, WebM, MOV), and audio (WAV, MP3, M4A, OGG). Free tier up to 10MB; Pro up to 50MB.
+                Images (JPEG, PNG, WebP), videos (MP4, WebM, MOV), and audio (WAV, MP3, M4A, OGG). All tiers up to 10MB.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -400,9 +436,9 @@ export default function Landing() {
                   <p className="text-sm text-muted-foreground">AI-Powered Deepfake Detection</p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground max-w-xs">
+              <Text size="sm" color="muted" className="max-w-xs">
                 Detect manipulated media across images, videos, and audio with fast, accurate AI.
-              </p>
+              </Text>
             </div>
 
             <div>

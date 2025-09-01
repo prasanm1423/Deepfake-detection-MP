@@ -160,13 +160,13 @@ export function CameraCapture({ onAnalysisComplete, onAnalysisStart }: CameraCap
         body: formData,
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
-      if (!data.success) {
-        throw new Error(data.error || 'Analysis failed');
+      if (!responseData.success) {
+        throw new Error(responseData.error || 'Analysis failed');
       }
 
-      onAnalysisComplete(data.result);
+      onAnalysisComplete(responseData.result);
       setCapturedMedia(null);
       
     } catch (err) {
