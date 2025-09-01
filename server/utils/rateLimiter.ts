@@ -19,32 +19,6 @@ const API_RATE_LIMITS = {
 };
 
 /**
- * Custom key generator for rate limiting that works in serverless environments
- */
-const createKeyGenerator = (prefix: string = '') => {
-  return (req: Request) => {
-    // Try to get IP from various sources, fallback to a default
-    let ip = req.ip || 
-             req.connection?.remoteAddress || 
-             req.socket?.remoteAddress || 
-             req.headers['x-forwarded-for'] || 
-             req.headers['x-real-ip'] || 
-             'unknown';
-    
-    // If x-forwarded-for contains multiple IPs, take the first one
-    if (typeof ip === 'string' && ip.includes(',')) {
-      ip = ip.split(',')[0].trim();
-    }
-    
-    // Create a unique key based on IP and user agent
-    const userAgent = req.get('User-Agent') || 'unknown';
-    const key = `${prefix}:${ip}:${userAgent}`;
-    
-    return key;
-  };
-};
-
-/**
  * Check if we can make an API call to the specified service
  */
 export function canMakeAPICall(service: 'sightengine' | 'resemble'): boolean {
@@ -201,7 +175,6 @@ export const createRateLimiters = () => {
   const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 500, // Increased to 500 requests per 15 minutes for general usage
-    keyGenerator: createKeyGenerator('general'),
     message: {
       success: false,
       error: 'Rate limit exceeded',
@@ -224,7 +197,6 @@ export const createRateLimiters = () => {
   const analysisLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 200, // Increased to 200 analysis requests per 15 minutes for production use
-    keyGenerator: createKeyGenerator('analysis'),
     message: {
       success: false,
       error: 'Analysis rate limit exceeded',
@@ -247,7 +219,6 @@ export const createRateLimiters = () => {
   const uploadLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // Increased to 100 file uploads per 15 minutes for production use
-    keyGenerator: createKeyGenerator('upload'),
     message: {
       success: false,
       error: 'Upload rate limit exceeded',
@@ -270,7 +241,6 @@ export const createRateLimiters = () => {
   const statusLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 minutes
     max: 200, // Increased to 200 status checks per 5 minutes for production use
-    keyGenerator: createKeyGenerator('status'),
     message: {
       success: false,
       error: 'Status check rate limit exceeded',
