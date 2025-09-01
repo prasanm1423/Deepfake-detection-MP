@@ -21,6 +21,10 @@ export function createServer() {
 
   const app = express();
 
+  // Configure trust proxy for Vercel deployment
+  // This is needed to properly handle X-Forwarded-For headers in serverless environments
+  app.set('trust proxy', true);
+
   // Secure CORS configuration
   const corsOptions = {
     origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
