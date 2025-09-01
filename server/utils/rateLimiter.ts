@@ -168,18 +168,37 @@ export async function retryWithBackoff<T>(
 }
 
 /**
- * Enhanced rate limiters for different endpoints
+ * Serverless-friendly rate limiters that don't rely on IP addresses
  */
 export const createRateLimiters = () => {
+  // Create a key generator that works in serverless environments
+  const createServerlessKey = (prefix: string) => {
+    return (req: Request) => {
+      // Use user agent and a combination of headers for identification
+      const userAgent = req.get('User-Agent') || 'unknown';
+      const acceptLanguage = req.get('Accept-Language') || 'unknown';
+      const acceptEncoding = req.get('Accept-Encoding') || 'unknown';
+      
+      // Create a fingerprint based on request characteristics
+      const fingerprint = `${prefix}:${userAgent}:${acceptLanguage}:${acceptEncoding}`;
+      
+      // Add timestamp-based component to prevent long-term bypass
+      const timeWindow = Math.floor(Date.now() / (15 * 60 * 1000)); // 15-minute windows
+      
+      return `${fingerprint}:${timeWindow}`;
+    };
+  };
+
   // General API rate limiter
   const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 500, // Increased to 500 requests per 15 minutes for general usage
+    max: 500, // 500 requests per 15 minutes
+    keyGenerator: createServerlessKey('general'),
     message: {
       success: false,
       error: 'Rate limit exceeded',
-      message: 'Too many requests from this IP, please try again later.',
-      retryAfter: 15 * 60 // seconds
+      message: 'Too many requests, please try again later.',
+      retryAfter: 15 * 60
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -187,7 +206,7 @@ export const createRateLimiters = () => {
       res.status(429).json({
         success: false,
         error: 'Rate limit exceeded',
-        message: 'Too many requests from this IP, please try again later.',
+        message: 'Too many requests, please try again later.',
         retryAfter: 15 * 60
       });
     }
@@ -196,7 +215,8 @@ export const createRateLimiters = () => {
   // Analysis rate limiter (more restrictive)
   const analysisLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 200, // Increased to 200 analysis requests per 15 minutes for production use
+    max: 200, // 200 analysis requests per 15 minutes
+    keyGenerator: createServerlessKey('analysis'),
     message: {
       success: false,
       error: 'Analysis rate limit exceeded',
@@ -218,7 +238,8 @@ export const createRateLimiters = () => {
   // Upload rate limiter (most restrictive)
   const uploadLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Increased to 100 file uploads per 15 minutes for production use
+    max: 100, // 100 file uploads per 15 minutes
+    keyGenerator: createServerlessKey('upload'),
     message: {
       success: false,
       error: 'Upload rate limit exceeded',
@@ -240,7 +261,8 @@ export const createRateLimiters = () => {
   // API status rate limiter (less restrictive)
   const statusLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 200, // Increased to 200 status checks per 5 minutes for production use
+    max: 200, // 200 status checks per 5 minutes
+    keyGenerator: createServerlessKey('status'),
     message: {
       success: false,
       error: 'Status check rate limit exceeded',
