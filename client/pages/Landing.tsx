@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Shield, Zap, Eye, Camera, Upload, BarChart3, CheckCircle, ArrowRight } from 'lucide-react'
+import { Shield, Zap, Eye, Camera, Upload, BarChart3, CheckCircle, ArrowRight, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,8 +9,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { useState } from 'react'
 
 export default function Landing() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const features = [
     {
@@ -121,15 +124,16 @@ export default function Landing() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">DeepGuard</h1>
-                <p className="text-xs text-muted-foreground">AI-Powered Deepfake Detection</p>
+                <p className="text-xs text-muted-foreground hidden sm:block">AI-Powered Deepfake Detection</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-6">
-              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors hidden md:inline">Features</a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors hidden md:inline">Pricing</a>
-              <a href="#faq" className="text-muted-foreground hover:text-foreground transition-colors hidden md:inline">FAQ</a>
-              <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors hidden md:inline">Live Demo</Link>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-6">
+              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+              <a href="#faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
+              <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">Live Demo</Link>
               <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">
                 Sign In
               </Link>
@@ -137,43 +141,110 @@ export default function Landing() {
                 <Button>Get Started</Button>
               </Link>
             </div>
+
+            {/* Mobile Navigation */}
+            <div className="md:hidden">
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-80">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center space-x-3">
+                      <div className="p-2 bg-primary rounded-lg">
+                        <Shield className="h-6 w-6 text-primary-foreground" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold">DeepGuard</h2>
+                        <p className="text-sm text-muted-foreground">AI-Powered Deepfake Detection</p>
+                      </div>
+                    </SheetTitle>
+                  </SheetHeader>
+                  
+                  <div className="py-6 space-y-4">
+                    <a 
+                      href="#features" 
+                      className="block p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Features
+                    </a>
+                    <a 
+                      href="#pricing" 
+                      className="block p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Pricing
+                    </a>
+                    <a 
+                      href="#faq" 
+                      className="block p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      FAQ
+                    </a>
+                    <Link 
+                      to="/dashboard" 
+                      className="block p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Live Demo
+                    </Link>
+                    <div className="pt-4 border-t space-y-3">
+                      <Link 
+                        to="/login" 
+                        className="block p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Sign In
+                      </Link>
+                      <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button className="w-full">Get Started</Button>
+                      </Link>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 px-4">
+      <section className="py-12 md:py-20 px-4">
         <div className="container mx-auto text-center">
           <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
             🚀 Now with Advanced AI Detection Models
           </Badge>
           
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
+          <h1 className="text-3xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
             Detect Deepfakes with
             <span className="text-primary block">AI-Powered Precision</span>
           </h1>
           
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto px-4">
             Protect your organization from manipulated media with our advanced deepfake detection system. 
             Analyze images, videos, and audio in real-time with industry-leading accuracy.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 px-4">
             <Link to="/signup">
-              <Button size="lg" className="min-w-[200px]">
+              <Button size="lg" className="min-w-[200px] w-full sm:w-auto">
                 Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/dashboard">
-              <Button size="lg" variant="secondary" className="min-w-[200px]">
+              <Button size="lg" variant="secondary" className="min-w-[200px] w-full sm:w-auto">
                 Try Live Demo
               </Button>
             </Link>
           </div>
 
           {/* Hero Image */}
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto px-4">
             <img
               src="/Gemini_Generated_Image_4ljay34ljay34lja.png"
               alt="DeepGuard deepfake detection illustration"
@@ -184,28 +255,28 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 bg-secondary/5">
+      <section id="features" className="py-16 md:py-20 px-4 bg-secondary/5">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4">
               Powerful Features for Every Use Case
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
               From content moderation to forensic analysis, DeepGuard provides the tools you need to detect manipulated media.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="h-full hover:shadow-lg transition-shadow duration-300">
+              <Card key={index} className="h-full hover:shadow-lg transition-all duration-300 hover:scale-105">
                 <CardHeader>
                   <div className="mb-4">
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-lg md:text-xl">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <p className="text-muted-foreground text-sm md:text-base">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -213,21 +284,21 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Use Cases Section (replaces Testimonials) */}
-      <section className="py-20 px-4">
+      {/* Use Cases Section */}
+      <section className="py-16 md:py-20 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Built for Real-World Workflows</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Practical applications to help teams detect and prevent manipulated media across the content lifecycle.</p>
+            <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4">Built for Real-World Workflows</h2>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">Practical applications to help teams detect and prevent manipulated media across the content lifecycle.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
             {useCases.map((c, i) => (
-              <Card key={i} className="h-full hover:shadow-lg transition-shadow duration-300">
+              <Card key={i} className="h-full hover:shadow-lg transition-all duration-300 hover:scale-105">
                 <CardHeader>
-                  <CardTitle className="text-xl">{c.title}</CardTitle>
+                  <CardTitle className="text-lg md:text-xl">{c.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{c.description}</p>
+                  <p className="text-muted-foreground text-sm md:text-base">{c.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -235,39 +306,41 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Pricing Section moved below Use Cases */}
-      <section className="py-20 px-4" id="pricing">
+      {/* Pricing Section */}
+      <section className="py-16 md:py-20 px-4" id="pricing">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4">
               Simple, Transparent Pricing
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
               Choose the plan that fits your needs. Upgrade or downgrade at any time.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
             {pricingTiers.map((tier, index) => (
-              <Card key={index} className={`relative h-full ${tier.popular ? 'border-primary shadow-lg scale-105' : ''}`}>
+              <Card key={index} className={`relative h-full transition-all duration-300 hover:scale-105 ${
+                tier.popular ? 'border-primary shadow-lg scale-105 md:scale-110' : 'hover:shadow-lg'
+              }`}>
                 {tier.popular && (
                   <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
                     Most Popular
                   </Badge>
                 )}
                 <CardHeader className="text-center">
-                  <CardTitle className="text-2xl">{tier.name}</CardTitle>
+                  <CardTitle className="text-xl md:text-2xl">{tier.name}</CardTitle>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold text-foreground">{tier.price}</span>
+                    <span className="text-3xl md:text-4xl font-bold text-foreground">{tier.price}</span>
                     <span className="text-muted-foreground">{tier.period}</span>
                   </div>
-                  <p className="text-muted-foreground mt-2">{tier.description}</p>
+                  <p className="text-muted-foreground mt-2 text-sm md:text-base">{tier.description}</p>
                 </CardHeader>
                 <CardContent className="flex-1">
                   <ul className="space-y-3 mb-8">
                     {tier.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                        <span className="text-sm text-foreground">{feature}</span>
+                        <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-primary mr-3 flex-shrink-0" />
+                        <span className="text-sm md:text-base text-foreground">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -283,30 +356,28 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonials removed */}
-
       {/* FAQ Section */}
-      <section id="faq" className="py-20 px-4">
+      <section id="faq" className="py-16 md:py-20 px-4">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Frequently Asked Questions</h2>
-            <p className="text-xl text-muted-foreground">Quick answers to common questions about DeepGuard.</p>
+            <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4">Frequently Asked Questions</h2>
+            <p className="text-lg md:text-xl text-muted-foreground px-4">Quick answers to common questions about DeepGuard.</p>
           </div>
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1">
-              <AccordionTrigger>Is my uploaded content stored permanently?</AccordionTrigger>
+              <AccordionTrigger className="text-left">Is my uploaded content stored permanently?</AccordionTrigger>
               <AccordionContent>
                 No. Files are processed for analysis and cleaned up automatically. We do not keep permanent copies.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2">
-              <AccordionTrigger>Do I need API keys to try the demo?</AccordionTrigger>
+              <AccordionTrigger className="text-left">Do I need API keys to try the demo?</AccordionTrigger>
               <AccordionContent>
                 No. The live demo works without keys. For production accuracy, configure service keys in your server environment.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-3">
-              <AccordionTrigger>What file types and sizes are supported?</AccordionTrigger>
+              <AccordionTrigger className="text-left">What file types and sizes are supported?</AccordionTrigger>
               <AccordionContent>
                 Images (JPEG, PNG, WebP), videos (MP4, WebM, MOV), and audio (WAV, MP3, M4A, OGG). Free tier up to 10MB; Pro up to 50MB.
               </AccordionContent>
@@ -314,8 +385,6 @@ export default function Landing() {
           </Accordion>
         </div>
       </section>
-
-      {/* CTA Section removed per request */}
 
       {/* Footer */}
       <footer className="border-t border-border/20 py-12 px-4">

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { InlineError } from '@/components/ui/error-boundary'
 import { signIn, resetPassword } from '@/lib/supabase'
 
 export default function Login() {
@@ -65,13 +66,13 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen gradient-bg flex items-center justify-center px-4">
+    <div className="min-h-screen gradient-bg flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-3 mb-6 text-foreground hover:text-primary transition-colors">
             <ArrowLeft className="h-5 w-5" />
-            <span>Back to Home</span>
+            <span className="text-sm md:text-base">Back to Home</span>
           </Link>
           
           <div className="flex items-center justify-center space-x-3 mb-4">
@@ -79,7 +80,7 @@ export default function Login() {
               <Shield className="h-8 w-8 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">DeepGuard</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">DeepGuard</h1>
               <p className="text-sm text-muted-foreground">AI-Powered Deepfake Detection</p>
             </div>
           </div>
@@ -88,10 +89,10 @@ export default function Login() {
         {/* Login Form */}
         <Card className="glass-effect">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">
+            <CardTitle className="text-xl md:text-2xl">
               {resetMode ? 'Reset Password' : 'Welcome Back'}
             </CardTitle>
-            <p className="text-muted-foreground">
+            <p className="text-sm md:text-base text-muted-foreground">
               {resetMode 
                 ? 'Enter your email to receive reset instructions'
                 : 'Sign in to your DeepGuard account'
@@ -109,16 +110,17 @@ export default function Login() {
             )}
 
             {error && (
-              <Alert className="mb-4 border-destructive/50 bg-destructive/10">
-                <AlertDescription className="text-destructive">
-                  {error}
-                </AlertDescription>
-              </Alert>
+              <InlineError
+                message={error}
+                type="error"
+                onRetry={() => setError(null)}
+                className="mb-4"
+              />
             )}
 
             <form onSubmit={resetMode ? handleResetPassword : handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-sm md:text-base">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -127,7 +129,7 @@ export default function Login() {
                     placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-10 md:h-11 text-sm md:text-base"
                     required
                   />
                 </div>
@@ -135,7 +137,7 @@ export default function Login() {
 
               {!resetMode && (
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-sm md:text-base">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -144,7 +146,7 @@ export default function Login() {
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 h-10 md:h-11 text-sm md:text-base"
                       required
                     />
                   </div>
@@ -153,7 +155,7 @@ export default function Login() {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full h-10 md:h-11 text-sm md:text-base"
                 disabled={loading}
               >
                 {loading ? (
@@ -171,7 +173,7 @@ export default function Login() {
               <div className="mt-4 text-center">
                 <button
                   onClick={() => setResetMode(true)}
-                  className="text-sm text-primary hover:underline"
+                  className="text-sm text-primary hover:underline transition-colors"
                 >
                   Forgot your password?
                 </button>
@@ -186,7 +188,7 @@ export default function Login() {
                     setError(null)
                     setMessage(null)
                   }}
-                  className="text-sm text-primary hover:underline"
+                  className="text-sm text-primary hover:underline transition-colors"
                 >
                   Back to Sign In
                 </button>
@@ -195,7 +197,7 @@ export default function Login() {
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-primary hover:underline">
+              <Link to="/signup" className="text-primary hover:underline transition-colors">
                 Sign up here
               </Link>
             </div>

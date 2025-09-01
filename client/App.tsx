@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ErrorBoundary } from "./components/ui/error-boundary";
 import { isSupabaseConfigured } from "./lib/supabase";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -18,7 +19,15 @@ import AnalysisHistory from "./pages/AnalysisHistory";
 import NotFound from "./pages/NotFound";
 import SetupGuide from "./components/SetupGuide";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -63,45 +72,47 @@ const AppRoutes = () => {
   }
 
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/" element={
-        <PublicRoute>
-          <Landing />
-        </PublicRoute>
-      } />
-      <Route path="/login" element={
-        <PublicRoute>
-          <Login />
-        </PublicRoute>
-      } />
-      <Route path="/signup" element={
-        <PublicRoute>
-          <Signup />
-        </PublicRoute>
-      } />
-      <Route path="/pricing" element={<Pricing />} />
+    <ErrorBoundary>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={
+          <PublicRoute>
+            <Landing />
+          </PublicRoute>
+        } />
+        <Route path="/login" element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        } />
+        <Route path="/signup" element={
+          <PublicRoute>
+            <Signup />
+          </PublicRoute>
+        } />
+        <Route path="/pricing" element={<Pricing />} />
 
-      {/* Protected routes */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-             <Route path="/results" element={
-         <ProtectedRoute>
-           <AnalysisResults />
-         </ProtectedRoute>
-       } />
-       <Route path="/history" element={
-         <ProtectedRoute>
-           <AnalysisHistory />
-         </ProtectedRoute>
-       } />
+        {/* Protected routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/results" element={
+          <ProtectedRoute>
+            <AnalysisResults />
+          </ProtectedRoute>
+        } />
+        <Route path="/history" element={
+          <ProtectedRoute>
+            <AnalysisHistory />
+          </ProtectedRoute>
+        } />
 
-       {/* Catch all route */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        {/* Catch all route */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </ErrorBoundary>
   );
 };
 
