@@ -24,8 +24,13 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    // Preserve original filename but add timestamp to prevent conflicts
+    const timestamp = Date.now();
+    const originalName = file.originalname;
+    const ext = path.extname(originalName);
+    const nameWithoutExt = path.basename(originalName, ext);
+    const safeName = `${timestamp}-${nameWithoutExt}${ext}`;
+    cb(null, safeName);
   }
 });
 
@@ -1033,6 +1038,7 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             metadata: {
               ...apiResponse.metadata,
               file_name: req.file.originalname,
+              saved_filename: req.file.filename, // Store the actual saved filename
               file_size: req.file.size,
               file_type: req.file.mimetype
             },
@@ -1064,6 +1070,7 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             metadata: {
               ...apiResponse.metadata,
               file_name: req.file.originalname,
+              saved_filename: req.file.filename, // Store the actual saved filename
               file_size: req.file.size,
               file_type: req.file.mimetype
             },
@@ -1098,6 +1105,7 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
             metadata: {
               ...apiResponse.metadata,
               file_name: req.file.originalname,
+              saved_filename: req.file.filename, // Store the actual saved filename
               file_size: req.file.size,
               file_type: req.file.mimetype
             },
@@ -1122,16 +1130,9 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
           throw new Error('Unsupported file type');
       }
 
-      // Clean up uploaded file immediately after processing
-      try {
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-          console.log('Temporary file cleaned up successfully');
-        }
-      } catch (cleanupError) {
-        console.error('File cleanup error:', cleanupError);
-        // Don't fail the request due to cleanup issues
-      }
+      // Keep the file for viewing - don't clean up immediately
+      // Files will be cleaned up by a scheduled task or manual cleanup
+      console.log('File kept for viewing:', filePath);
 
       res.json({
         success: true,
@@ -1139,16 +1140,8 @@ export const handleAnalyze: RequestHandler = async (req, res) => {
       } as AnalysisResponse);
 
     } catch (apiError) {
-      // Clean up file on error with better error handling
-      try {
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-          console.log('Temporary file cleaned up after error');
-        }
-      } catch (cleanupError) {
-        console.error('File cleanup error after API failure:', cleanupError);
-        // Continue with the original error
-      }
+      // Keep file even on error for debugging purposes
+      console.log('File kept after error for debugging:', filePath);
       throw apiError;
     }
 

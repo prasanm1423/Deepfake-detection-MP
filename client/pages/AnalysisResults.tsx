@@ -17,7 +17,13 @@ import {
   Eye,
   EyeOff,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Play,
+  Pause,
+  Volume2,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  Music
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -45,6 +51,8 @@ export default function AnalysisResults() {
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false)
   const [selectedTab, setSelectedTab] = useState('overview')
   const [isLoading, setIsLoading] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null)
 
   // Get results from navigation state or localStorage
   useEffect(() => {
@@ -141,6 +149,211 @@ export default function AnalysisResults() {
     } else {
       copyToClipboard(window.location.href, 'Share URL')
     }
+  }
+
+  // Media viewer functions
+  const getMediaUrl = () => {
+    // Use saved_filename if available, otherwise fall back to file_name
+    const fileName = currentResult?.metadata?.saved_filename || currentResult?.metadata?.file_name
+    if (!fileName) return null
+    
+    const fileType = currentResult.metadata?.file_type || ''
+    
+    // Use the API endpoint to serve files securely
+    return `/api/files/${encodeURIComponent(fileName)}`
+  }
+
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying)
+  }
+
+  const MediaViewer = () => {
+    if (!currentResult) return null
+
+    const fileType = currentResult.metadata?.file_type || ''
+    const fileName = currentResult.metadata?.file_name || 'Unknown file' // Display original name
+    const fileSize = currentResult.metadata?.file_size || 0
+    const mediaUrl = getMediaUrl()
+
+    console.log('MediaViewer Debug:', {
+      fileName,
+      fileType,
+      fileSize,
+      mediaUrl,
+      metadata: currentResult.metadata
+    })
+
+    const formatFileSize = (bytes: number) => {
+      if (bytes === 0) return '0 Bytes'
+      const k = 1024
+      const sizes = ['Bytes', 'KB', 'MB', 'GB']
+      const i = Math.floor(Math.log(bytes) / Math.log(k))
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    }
+
+    const isImage = fileType.startsWith('image/')
+    const isVideo = fileType.startsWith('video/')
+    const isAudio = fileType.startsWith('audio/')
+
+    if (!isImage && !isVideo && !isAudio) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <FileText className="h-5 w-5" />
+              <span>File Preview</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">{fileName}</p>
+              <p className="text-sm text-muted-foreground">{formatFileSize(fileSize)}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )
+    }
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            {isImage && <ImageIcon className="h-5 w-5" />}
+            {isVideo && <VideoIcon className="h-5 w-5" />}
+            {isAudio && <Music className="h-5 w-5" />}
+            <span>Media Preview</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* File Info */}
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>{fileName}</span>
+              <span>{formatFileSize(fileSize)}</span>
+            </div>
+
+            {/* Media Display */}
+            <div className="relative">
+              {isImage && (
+                <div className="relative group">
+                  <img
+                    src={mediaUrl || '/placeholder.svg'}
+                    alt={fileName}
+                    className="w-full h-64 object-cover rounded-lg border"
+                    onError={(e) => {
+                      console.error('Image load error:', e)
+                      e.currentTarget.src = '/placeholder.svg'
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      onClick={() => window.open(getMediaUrl(), '_blank')}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Full Size
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {isVideo && (
+                <div className="relative">
+                  <video
+                    src={mediaUrl || undefined}
+                    className="w-full h-64 object-cover rounded-lg border"
+                    controls
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onEnded={() => setIsPlaying(false)}
+                    onError={(e) => {
+                      console.error('Video load error:', e)
+                    }}
+                  >
+                    <source src={mediaUrl || ''} type={fileType} />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              )}
+
+              {isAudio && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
+                    <Music className="h-16 w-16 text-muted-foreground" />
+                  </div>
+                  <audio
+                    src={mediaUrl || undefined}
+                    className="w-full"
+                    controls
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onEnded={() => setIsPlaying(false)}
+                    onError={(e) => {
+                      console.error('Audio load error:', e)
+                    }}
+                  >
+                    <source src={mediaUrl || ''} type={fileType} />
+                    Your browser does not support the audio tag.
+                  </audio>
+                </div>
+              )}
+            </div>
+
+            {/* Media Controls */}
+            {(isVideo || isAudio) && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePlayPause}
+                    disabled={!getMediaUrl()}
+                  >
+                    {isPlaying ? (
+                      <>
+                        <Pause className="h-4 w-4 mr-2" />
+                        Pause
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-2" />
+                        Play
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(mediaUrl, '_blank')}
+                    disabled={!mediaUrl}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open in New Tab
+                  </Button>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const link = document.createElement('a')
+                    link.href = mediaUrl || ''
+                    link.download = fileName
+                    link.click()
+                  }}
+                  disabled={!mediaUrl}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   if (!currentResult) {
@@ -444,6 +657,8 @@ export default function AnalysisResults() {
 
             {/* Right Column - Sidebar */}
             <div className="space-y-6">
+              {/* Media Viewer */}
+              <MediaViewer />
               {/* Analysis History */}
               {results.length > 1 && (
                 <Card>

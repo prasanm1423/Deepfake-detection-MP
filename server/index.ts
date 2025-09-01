@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import path from "path";
 import { handleDemo } from "./routes/demo.js";
 import { testSightengineAPI, testResembleAPI } from "./routes/test-api.js";
 import { debugFileUpload } from "./routes/analyze.js";
@@ -67,6 +68,9 @@ export function createServer() {
   // Middleware
   app.use(express.json({ limit: '10mb' })); // Reduced from 50mb for security
   app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Reduced from 50mb for security
+  
+  // Serve uploaded files statically
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   
   // Apply general rate limiting to all routes
   app.use(generalLimiter);
@@ -205,6 +209,149 @@ export function createServer() {
       success: true,
       message: "Rate limits reset successfully"
     });
+  });
+
+  // Serve uploaded files by filename
+  app.get("/api/files/:filename", async (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const filePath = path.join(process.cwd(), 'uploads', filename);
+      
+      console.log(`[FILE_SERVE] Request for file: ${filename}`);
+      console.log(`[FILE_SERVE] Full path: ${filePath}`);
+      
+      // Security check: prevent directory traversal
+      const resolvedPath = path.resolve(filePath);
+      const uploadsDir = path.resolve(path.join(process.cwd(), 'uploads'));
+      
+      if (!resolvedPath.startsWith(uploadsDir)) {
+        console.log(`[FILE_SERVE] Access denied - path traversal attempt`);
+        return res.status(403).json({ success: false, error: 'Access denied' });
+      }
+      
+      // Check if file exists
+      const fs = await import('fs');
+      if (!fs.existsSync(filePath)) {
+        console.log(`[FILE_SERVE] File not found: ${filePath}`);
+        return res.status(404).json({ success: false, error: 'File not found' });
+      }
+      
+      // Get file stats
+      const stats = fs.statSync(filePath);
+      console.log(`[FILE_SERVE] File stats: ${stats.size} bytes, modified: ${stats.mtime}`);
+      
+      // Set appropriate headers based on file extension
+      const ext = path.extname(filename).toLowerCase();
+      let contentType = 'application/octet-stream';
+      
+      if (ext === '.png') contentType = 'image/png';
+      else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+      else if (ext === '.gif') contentType = 'image/gif';
+      else if (ext === '.webp') contentType = 'image/webp';
+      else if (ext === '.mp4') contentType = 'video/mp4';
+      else if (ext === '.avi') contentType = 'video/x-msvideo';
+      else if (ext === '.mov') contentType = 'video/quicktime';
+      else if (ext === '.mp3') contentType = 'audio/mpeg';
+      else if (ext === '.wav') contentType = 'audio/wav';
+      else if (ext === '.ogg') contentType = 'audio/ogg';
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Length', stats.size);
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      
+      console.log(`[FILE_SERVE] Serving file: ${filePath}`);
+      
+      // Use createReadStream for better error handling
+      const stream = fs.createReadStream(filePath);
+      
+      stream.on('error', (err) => {
+        console.error('[FILE_SERVE] Stream error:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ success: false, error: 'File read error' });
+        }
+      });
+      
+      stream.on('end', () => {
+        console.log(`[FILE_SERVE] Successfully served: ${filename}`);
+      });
+      
+      stream.pipe(res);
+      
+    } catch (error) {
+      console.error('[FILE_SERVE] Unexpected error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, error: 'Internal server error' });
+      }
+    }
+  });
+
+  // List uploaded files endpoint (for debugging)
+  app.get("/api/files", async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      
+      if (!fs.existsSync(uploadsDir)) {
+        return res.json({ success: true, files: [], message: 'No uploads directory found' });
+      }
+      
+      const files = fs.readdirSync(uploadsDir);
+      const fileList = files.map(file => {
+        const filePath = path.join(uploadsDir, file);
+        const stats = fs.statSync(filePath);
+        return {
+          name: file,
+          size: stats.size,
+          modified: stats.mtime,
+          url: `/api/files/${encodeURIComponent(file)}`
+        };
+      });
+      
+      res.json({ 
+        success: true, 
+        files: fileList,
+        count: fileList.length
+      });
+    } catch (error) {
+      console.error('List files error:', error);
+      res.status(500).json({ success: false, error: 'Failed to list files' });
+    }
+  });
+
+  // Cleanup old files endpoint (for maintenance)
+  app.post("/api/cleanup-files", async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      
+      if (!fs.existsSync(uploadsDir)) {
+        return res.json({ success: true, message: 'No uploads directory found' });
+      }
+      
+      const files = fs.readdirSync(uploadsDir);
+      let cleanedCount = 0;
+      
+      for (const file of files) {
+        const filePath = path.join(uploadsDir, file);
+        const stats = fs.statSync(filePath);
+        const ageInHours = (Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60);
+        
+        // Clean up files older than 24 hours
+        if (ageInHours > 24) {
+          fs.unlinkSync(filePath);
+          cleanedCount++;
+        }
+      }
+      
+      res.json({ 
+        success: true, 
+        message: `Cleaned up ${cleanedCount} old files`,
+        cleanedCount 
+      });
+    } catch (error) {
+      console.error('Cleanup error:', error);
+      res.status(500).json({ success: false, error: 'Cleanup failed' });
+    }
   });
 
   // Global error handler for security and validation errors
