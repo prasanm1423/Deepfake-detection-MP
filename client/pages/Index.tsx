@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FileUpload } from '@/components/FileUpload';
+import FileUpload from '@/components/FileUpload';
 import { CameraCapture } from '@/components/CameraCapture';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { AnalysisResult } from '@shared/api';

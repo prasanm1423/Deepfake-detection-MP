@@ -380,13 +380,13 @@ export default function AnalysisHistory() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Result:</span>
                       <div className="flex items-center space-x-1">
-                        {analysis.isDeepfake ? (
+                        {analysis.is_deepfake ? (
                           <AlertTriangle className="h-4 w-4 text-red-500" />
                         ) : (
                           <CheckCircle className="h-4 w-4 text-green-500" />
                         )}
-                        <span className={analysis.isDeepfake ? 'text-red-600' : 'text-green-600'}>
-                          {analysis.isDeepfake ? 'Deepfake' : 'Authentic'}
+                        <span className={analysis.is_deepfake ? 'text-red-600' : 'text-green-600'}>
+                          {analysis.is_deepfake ? 'Deepfake' : 'Authentic'}
                         </span>
                       </div>
                     </div>

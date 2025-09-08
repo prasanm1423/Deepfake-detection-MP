@@ -374,62 +374,26 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
                                  <span className="text-muted-foreground">Total Frames:</span>
                                  <span className="text-foreground">{result.videoAnalysis.frameAnalysis.totalFrames}</span>
                                </div>
-                               <div className="flex justify-between">
-                                 <span className="text-muted-foreground">Max Score:</span>
-                                 <span className="text-foreground">{(result.videoAnalysis.frameAnalysis.maxScore * 100).toFixed(0)}%</span>
-                               </div>
-                               <div className="flex justify-between">
-                                 <span className="text-muted-foreground">Average Score:</span>
-                                 <span className="text-foreground">{(result.videoAnalysis.frameAnalysis.averageScore * 100).toFixed(0)}%</span>
+                               {/* Omitted: max/average score (not in shared types) */}
                                </div>
                              </div>
-                           </div>
-
-                           {/* Manipulation Indicators */}
-                           <div className="mb-3">
-                             <h5 className="text-xs font-medium text-foreground mb-1">Manipulation Indicators</h5>
-                             <div className="space-y-1">
-                               <div className="flex justify-between text-xs">
-                                 <span className="text-muted-foreground">Temporal Inconsistencies:</span>
-                                 <span className="text-foreground">{(result.videoAnalysis.manipulationIndicators.temporalInconsistencies * 100).toFixed(0)}%</span>
-                               </div>
-                               <div className="flex justify-between text-xs">
-                                 <span className="text-muted-foreground">Frame Editing Signs:</span>
-                                 <span className="text-foreground">{(result.videoAnalysis.manipulationIndicators.frameEditingSigns * 100).toFixed(0)}%</span>
-                               </div>
-                               <div className="flex justify-between text-xs">
-                                 <span className="text-muted-foreground">Compression Artifacts:</span>
-                                 <span className="text-foreground">{(result.videoAnalysis.manipulationIndicators.compressionArtifacts * 100).toFixed(0)}%</span>
-                               </div>
-                               <div className="flex justify-between text-xs">
-                                 <span className="text-muted-foreground">Audio-Video Sync:</span>
-                                 <span className="text-foreground">{(result.videoAnalysis.manipulationIndicators.audioVideoSync * 100).toFixed(0)}%</span>
-                               </div>
-                             </div>
-                           </div>
-
-                           {/* Technical Analysis */}
-                           <div>
-                             <h5 className="text-xs font-medium text-foreground mb-1">Technical Details</h5>
-                             <div className="grid grid-cols-2 gap-2 text-xs">
-                               <div className="flex justify-between">
-                                 <span className="text-muted-foreground">Resolution:</span>
-                                 <span className="text-foreground">{result.videoAnalysis.technicalAnalysis.resolution}</span>
-                               </div>
-                               <div className="flex justify-between">
-                                 <span className="text-muted-foreground">Duration:</span>
-                                 <span className="text-foreground">{result.videoAnalysis.technicalAnalysis.duration}s</span>
-                               </div>
-                               <div className="flex justify-between">
-                                 <span className="text-muted-foreground">FPS:</span>
-                                 <span className="text-foreground">{result.videoAnalysis.technicalAnalysis.fps}</span>
-                               </div>
-                               <div className="flex justify-between">
-                                 <span className="text-muted-foreground">Frames Analyzed:</span>
-                                 <span className="text-foreground">{result.videoAnalysis.technicalAnalysis.framesAnalyzed}</span>
-                               </div>
-                             </div>
-                           </div>
+ 
+                          {/* Temporal Metrics (per shared types) */}
+                          <div className="mb-3">
+                            <h5 className="text-xs font-medium text-foreground mb-1">Temporal Metrics</h5>
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Consistency Score:</span>
+                                <span className="text-foreground">{(result.videoAnalysis.temporalAnalysis.consistencyScore * 100).toFixed(0)}%</span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Frame Variations:</span>
+                                <span className="text-foreground">{(result.videoAnalysis.temporalAnalysis.frameVariations * 100).toFixed(0)}%</span>
+                              </div>
+                            </div>
+                          </div>
+ 
+                           {/* Video technical details not defined in shared types */}
                          </div>
                        )}
 
@@ -452,46 +416,30 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
                                  <span className="text-muted-foreground">Consistency:</span>
                                  <span className="text-foreground">{(result.audioAnalysis.voiceCharacteristics.consistency * 100).toFixed(0)}%</span>
                                </div>
-                               <div className="flex justify-between">
-                                 <span className="text-muted-foreground">Background Noise:</span>
-                                 <span className="text-foreground">{(result.audioAnalysis.voiceCharacteristics.backgroundNoise * 100).toFixed(0)}%</span>
-                               </div>
-                             </div>
-                           </div>
-
+                               {/* backgroundNoise not available in shared types */}
+                              </div>
+                            </div>
+ 
                            {/* Synthetic Indicators */}
                            <div className="mb-3">
                              <h5 className="text-xs font-medium text-foreground mb-1">Synthetic Indicators</h5>
                              <div className="space-y-1">
                                <div className="flex justify-between text-xs">
                                  <span className="text-muted-foreground">Artificial Patterns:</span>
-                                 <span className="text-foreground">{(result.audioAnalysis.syntheticIndicators.artificialPatterns * 100).toFixed(0)}%</span>
+                                 <span className="text-foreground">{(result.audioAnalysis.synthesisIndicators.artificialPatterns * 100).toFixed(0)}%</span>
                                </div>
                                <div className="flex justify-between text-xs">
-                                 <span className="text-muted-foreground">Frequency Anomalies:</span>
-                                 <span className="text-foreground">{(result.audioAnalysis.syntheticIndicators.frequencyAnomalies * 100).toFixed(0)}%</span>
+                                 <span className="text-muted-foreground">Voice Cloning Signs:</span>
+                                 <span className="text-foreground">{(result.audioAnalysis.synthesisIndicators.voiceCloningSigns * 100).toFixed(0)}%</span>
                                </div>
                                <div className="flex justify-between text-xs">
-                                 <span className="text-muted-foreground">Temporal Inconsistencies:</span>
-                                 <span className="text-foreground">{(result.audioAnalysis.syntheticIndicators.temporalInconsistencies * 100).toFixed(0)}%</span>
+                                 <span className="text-muted-foreground">Background Consistency:</span>
+                                 <span className="text-foreground">{(result.audioAnalysis.synthesisIndicators.backgroundConsistency * 100).toFixed(0)}%</span>
                                </div>
                              </div>
                            </div>
-
-                           {/* Quality Metrics */}
-                           <div>
-                             <h5 className="text-xs font-medium text-foreground mb-1">Quality Metrics</h5>
-                             <div className="grid grid-cols-2 gap-2 text-xs">
-                               <div className="flex justify-between">
-                                 <span className="text-muted-foreground">Clarity:</span>
-                                 <span className="text-foreground">{(result.audioAnalysis.qualityMetrics.clarity * 100).toFixed(0)}%</span>
-                               </div>
-                               <div className="flex justify-between">
-                                 <span className="text-muted-foreground">Stability:</span>
-                                 <span className="text-foreground">{(result.audioAnalysis.qualityMetrics.stability * 100).toFixed(0)}%</span>
-                               </div>
-                             </div>
-                           </div>
+ 
+                           {/* Quality Metrics not defined in shared types */}
                          </div>
                        )}
 

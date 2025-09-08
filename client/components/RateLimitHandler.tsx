@@ -78,7 +78,7 @@ export function RateLimitHandler({ error, onRetry, onDismiss }: RateLimitHandler
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Alert variant="warning">
+        <Alert className="border-warning/50 bg-warning/10">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {error.message}
