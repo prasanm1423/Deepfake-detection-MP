@@ -5,7 +5,7 @@ import path from "path";
 import { handleDemo } from "./routes/demo.js";
 import { testSightengineAPI, testResembleAPI } from "./routes/test-api.js";
 import { debugFileUpload } from "./routes/analyze.js";
-import { createRateLimiters } from "./utils/rateLimiter.js";
+// Rate limiters removed for this project
 
 export function createServer() {
   // Environment variable verification
@@ -16,8 +16,7 @@ export function createServer() {
   console.log('- API Status:', (process.env.SIGHTENGINE_USER && process.env.SIGHTENGINE_SECRET) ? 'READY' : 'DEMO MODE');
   console.log('=====================================');
 
-  // Create rate limiters using the enhanced utility
-  const { generalLimiter, analysisLimiter, uploadLimiter, statusLimiter } = createRateLimiters();
+  // Rate limiters disabled
 
   const app = express();
 
@@ -72,8 +71,7 @@ export function createServer() {
   // Serve uploaded files statically
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   
-  // Apply general rate limiting to all routes
-  app.use(generalLimiter);
+  // Rate limiting disabled
   
   // Security headers middleware
   app.use((req, res, next) => {
@@ -152,7 +150,7 @@ export function createServer() {
   app.get("/api/test-resemble", testResembleAPI);
   
   // Debug file upload endpoint
-  app.post("/api/debug-upload", uploadLimiter, async (req, res) => {
+  app.post("/api/debug-upload", async (req, res) => {
     try {
       const { upload } = await import("./routes/analyze.js");
       upload.single('file')(req, res, (err: any) => {
@@ -167,7 +165,7 @@ export function createServer() {
   });
 
   // Deepfake analysis routes - lazy load to avoid multer import at startup
-  app.post("/api/analyze", analysisLimiter, async (req, res) => {
+  app.post("/api/analyze", async (req, res) => {
     try {
       const { handleAnalyze, upload } = await import("./routes/analyze.js");
       upload.single('file')(req, res, (err: any) => {
@@ -182,7 +180,7 @@ export function createServer() {
   });
 
   // Environment status endpoint for frontend to check API key configuration
-  app.get("/api/status", statusLimiter, (_req, res) => {
+  app.get("/api/status", (_req, res) => {
     res.json({
       sightengineConfigured: !!(process.env.SIGHTENGINE_USER && process.env.SIGHTENGINE_SECRET),
       resembleConfigured: !!process.env.RESEMBLE_API_KEY,
@@ -191,25 +189,10 @@ export function createServer() {
   });
 
   // API rate limits status endpoint
-  app.get("/api/rate-limits", statusLimiter, (_req, res) => {
-    const { getRemainingAPICalls } = require("./utils/rateLimiter.js");
-    
-    res.json({
-      sightengine: getRemainingAPICalls('sightengine'),
-      resemble: getRemainingAPICalls('resemble'),
-      message: "API Rate Limits Status"
-    });
-  });
+  // Removed /api/rate-limits endpoint
 
   // Reset rate limits endpoint (for development/testing)
-  app.post("/api/reset-rate-limits", (_req, res) => {
-    const { resetRateLimits } = require("./utils/rateLimiter.js");
-    resetRateLimits();
-    res.json({
-      success: true,
-      message: "Rate limits reset successfully"
-    });
-  });
+  // Removed reset-rate-limits endpoint
 
   // Serve uploaded files by filename
   app.get("/api/files/:filename", async (req, res) => {
@@ -367,14 +350,7 @@ export function createServer() {
       });
     }
 
-    // Handle rate limiting errors
-    if (err.status === 429) {
-      return res.status(429).json({
-        success: false,
-        error: 'Rate limit exceeded',
-        message: err.message || 'Too many requests'
-      });
-    }
+    // (429 handling removed)
 
     // Handle validation errors
     if (err.status === 400 || err.status === 413) {

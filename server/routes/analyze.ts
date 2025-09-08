@@ -5,21 +5,21 @@ import axios from "axios";
 import FormData from "form-data";
 import path from "path";
 import fs from "fs";
-import { 
-  retryWithBackoff, 
-  canMakeAPICall, 
-  recordAPICall, 
-  getRemainingAPICalls,
-  checkAPIRateLimit,
-  recordAPICallMiddleware
-} from "../utils/rateLimiter.js";
+// Removed rate limiter utilities
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadsDir = path.join(process.cwd(), 'uploads');
+    // Use writable temp dir on serverless (e.g., Vercel) and local 'uploads' in dev
+    const isServerless = process.env.VERCEL === '1' || process.env.NOW_REGION || process.env.SERVERLESS;
+    const baseDir = isServerless ? '/tmp' : process.cwd();
+    const uploadsDir = path.join(baseDir, 'uploads');
     if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+      try {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      } catch (e) {
+        return cb(e as Error, uploadsDir);
+      }
     }
     cb(null, uploadsDir);
   },
@@ -154,12 +154,6 @@ async function analyzeImage(filePath: string): Promise<any> {
   });
 
   try {
-    // Check if we can make an API call
-    if (!canMakeAPICall('sightengine')) {
-      const remaining = getRemainingAPICalls('sightengine');
-      throw new Error(`Rate limit exceeded for Sightengine API. Please try again in ${Math.ceil((remaining.nextReset - Date.now()) / 1000)} seconds.`);
-    }
-
     console.log('Sending request to Sightengine API with axios...');
     console.log('Form data contents:');
     console.log('- api_user:', SIGHTENGINE_USER);
@@ -169,24 +163,19 @@ async function analyzeImage(filePath: string): Promise<any> {
     console.log('- media file size:', fs.statSync(filePath).size, 'bytes');
     console.log('- media file path:', filePath);
     
-    // Record the API call before making it
-    recordAPICall('sightengine');
-    
-    // Use retry with backoff for the API call
-    const response = await retryWithBackoff(async () => {
-      return await axios.post(
-        'https://api.sightengine.com/1.0/check.json',
-        form,
-        {
-          headers: {
-            ...form.getHeaders(),
-          },
-          timeout: 30000, // 30 second timeout
-          maxContentLength: 10 * 1024 * 1024, // 10MB limit
-          maxBodyLength: 10 * 1024 * 1024, // 10MB limit
-        }
-      );
-    }, 3, 2000); // 3 retries with 2 second base delay
+    // Make API call
+    const response = await axios.post(
+      'https://api.sightengine.com/1.0/check.json',
+      form,
+      {
+        headers: {
+          ...form.getHeaders(),
+        },
+        timeout: 30000,
+        maxContentLength: 10 * 1024 * 1024,
+        maxBodyLength: 10 * 1024 * 1024,
+      }
+    );
 
     console.log('Response received. Status:', response.status);
     const data = response.data;
