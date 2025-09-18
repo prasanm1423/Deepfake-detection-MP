@@ -47,6 +47,8 @@ export default function AnalysisHistory() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterRisk, setFilterRisk] = useState<string>('all')
+  const [dateFrom, setDateFrom] = useState<string>('')
+  const [dateTo, setDateTo] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -186,6 +188,23 @@ export default function AnalysisHistory() {
   const filteredAnalyses = analyses.filter(analysis => {
     if (filterType !== 'all' && analysis.analysis_type !== filterType) return false
     if (filterRisk !== 'all' && analysis.risk_level !== filterRisk) return false
+    if (dateFrom) {
+      const from = new Date(dateFrom)
+      const created = new Date(analysis.created_at)
+      if (created < from) return false
+    }
+    if (dateTo) {
+      const to = new Date(dateTo)
+      const created = new Date(analysis.created_at)
+      // include end date full day
+      const endOfDay = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59, 999)
+      if (created > endOfDay) return false
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase()
+      const name = (analysis.file_name || '').toLowerCase()
+      if (!name.includes(q)) return false
+    }
     return true
   })
 
@@ -291,10 +310,9 @@ export default function AnalysisHistory() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search by filename or type..."
+                    placeholder="Search by filename..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                     className="pl-10"
                   />
                 </div>
@@ -325,10 +343,23 @@ export default function AnalysisHistory() {
                 </SelectContent>
               </Select>
 
-              <Button onClick={handleSearch} disabled={loading}>
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="w-36"
+                  />
+                  <span className="text-sm text-muted-foreground">to</span>
+                  <Input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="w-36"
+                  />
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

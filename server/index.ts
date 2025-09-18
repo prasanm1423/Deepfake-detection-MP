@@ -80,7 +80,8 @@ export function createServer() {
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    // Allow camera and microphone on same-origin so the CameraCapture works
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(self), camera=(self)');
     
     // Remove server information
     res.removeHeader('X-Powered-By');

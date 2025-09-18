@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { Shield, Upload, Camera, BarChart3, User, LogOut, Crown, Zap, AlertCircle, CheckCircle, FileText, Menu, TrendingUp, TrendingDown } from 'lucide-react'
+import { Shield, Upload, Camera, BarChart3, LogOut, Zap, AlertCircle, CheckCircle, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -10,12 +10,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import FileUpload from '@/components/FileUpload'
 import { CameraCapture } from '@/components/CameraCapture'
-import { AnalysisSuccess } from '@/components/AnalysisSuccess'
 import { MobileNav, MobileHeader } from '@/components/ui/mobile-nav'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
-import { Breadcrumb } from '@/components/ui/breadcrumb'
+import ConfidenceGauge from '@/components/ConfidenceGauge'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
-import { Text, Caption } from '@/components/ui/typography'
+import { Caption } from '@/components/ui/typography'
 import { AnalysisResult } from '@shared/api'
 import { trackAnalysis, saveAnalysisToHistory } from '@/lib/supabase'
 
@@ -24,45 +24,11 @@ export default function Dashboard() {
   const { user, profile, monthlyUsage, usageLimit, canAnalyze, signOut, refreshUsage } = useAuth()
   const [results, setResults] = useState<AnalysisResult[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [lastResult, setLastResult] = useState<AnalysisResult | null>(null)
+  // Simplified flow: no success dialog
 
   const usagePercentage = usageLimit === -1 ? 0 : (monthlyUsage / usageLimit) * 100
 
-  const getTierInfo = (tier: string) => {
-    switch (tier) {
-      case 'free':
-        return {
-          name: 'Free',
-          icon: <Shield className="h-4 w-4" />,
-          color: 'bg-secondary text-secondary-foreground',
-          features: ['10 analyses/month', 'Basic detection', '10MB file limit']
-        }
-      case 'pro':
-        return {
-          name: 'Pro',
-          icon: <Zap className="h-4 w-4" />,
-          color: 'bg-primary text-primary-foreground',
-          features: ['500 analyses/month', 'All detection models', '10MB file limit', 'API access']
-        }
-      case 'enterprise':
-        return {
-          name: 'Enterprise',
-          icon: <Crown className="h-4 w-4" />,
-          color: 'bg-warning text-warning-foreground',
-          features: ['Unlimited analyses', 'Custom models', '100MB file limit', 'Priority support']
-        }
-      default:
-        return {
-          name: 'Free',
-          icon: <Shield className="h-4 w-4" />,
-          color: 'bg-secondary text-secondary-foreground',
-          features: ['10 analyses/month', 'Basic detection', '10MB file limit']
-        }
-    }
-  }
-
-  const tierInfo = getTierInfo(profile?.subscription_tier || 'free')
+  const tier = (profile?.subscription_tier || 'free').toUpperCase()
 
   const handleAnalysisStart = () => {
     setIsAnalyzing(true)
@@ -136,9 +102,7 @@ export default function Dashboard() {
       // Don't block the UI - tracking is optional
     }
 
-    // Show success modal
-    setLastResult(result)
-    setShowSuccess(true)
+    // No success modal
   }
 
   const clearResults = () => {
@@ -203,9 +167,9 @@ export default function Dashboard() {
                 </Button>
               )}
               
-              <Badge className={tierInfo.color}>
-                {tierInfo.icon}
-                <span className="ml-1">{tierInfo.name}</span>
+              <Badge className="bg-secondary text-secondary-foreground">
+                <Zap className="h-4 w-4" />
+                <span className="ml-1">{tier}</span>
               </Badge>
               
               <Button variant="ghost" size="sm" onClick={signOut}>
@@ -218,10 +182,6 @@ export default function Dashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb Navigation */}
-        <div className="mb-6">
-          <Breadcrumb />
-        </div>
 
         {/* Usage Alert */}
         {!canAnalyze && (
@@ -234,28 +194,14 @@ export default function Dashboard() {
           </Alert>
         )}
 
-        {/* Usage Stats */}
-        <Card className="mb-6 glass-effect">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Monthly Usage</span>
-              <div className="text-sm text-muted-foreground">
-                {monthlyUsage} / {usageLimit === -1 ? '∞' : usageLimit} analyses
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Progress value={usagePercentage} className="h-2" />
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Usage this month</span>
-                <span className={usagePercentage > 80 ? 'text-warning' : usagePercentage > 95 ? 'text-destructive' : ''}>
-                  {usagePercentage.toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Compact Usage Bar */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Monthly Usage</span>
+            <span className="text-xs text-muted-foreground">{monthlyUsage} / {usageLimit === -1 ? '∞' : usageLimit}</span>
+          </div>
+          <Progress value={usagePercentage} className="h-2" />
+        </div>
 
         {/* Session Stats */}
         {results.length > 0 ? (
@@ -319,60 +265,63 @@ export default function Dashboard() {
             </Card>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <Card className="glass-effect border-primary/20 bg-primary/5 hover:shadow-lg transition-all duration-300 hover:scale-105">
-              <CardContent className="p-6 text-center">
-                <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                  <Camera className="h-6 w-6 text-blue-600" />
-                </div>
-                <CardTitle className="text-lg mb-2">Upload Images</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Upload photos to detect face-swap deepfakes and AI-generated content
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-effect border-green-500/30 bg-green-500/10 hover:shadow-lg transition-all duration-300 hover:scale-105">
-              <CardContent className="p-6 text-center">
-                <div className="mx-auto w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
-                  <FileText className="h-6 w-6 text-green-600" />
-                </div>
-                <CardTitle className="text-lg mb-2">Analyze Videos</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Check video files for temporal inconsistencies and manipulation
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-effect border-yellow-500/30 bg-yellow-500/10 hover:shadow-lg transition-all duration-300 hover:scale-105">
-              <CardContent className="p-6 text-center">
-                <div className="mx-auto w-12 h-12 bg-yellow-500/10 rounded-full flex items-center justify-center mb-4">
-                  <Zap className="h-6 w-6 text-purple-600" />
-                </div>
-                <CardTitle className="text-lg mb-2">Audio Detection</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Detect synthetic voices and audio deepfakes with AI analysis
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <Card className="glass-effect mb-8">
+            <CardContent className="p-6 text-center">
+              <Shield className="h-6 w-6 text-primary mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Upload media or use the camera to start analyzing.</p>
+            </CardContent>
+          </Card>
         )}
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Analysis Tools */}
           <div className="lg:col-span-2">
-                      <div className="text-center mb-16">
-            <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-4">
-              Deepfake Detection Tools
-            </h2>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-              Choose your preferred method to analyze media for deepfakes
-            </p>
-          </div>
-            
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-foreground">Deepfake Detection</h2>
+              <p className="text-sm text-muted-foreground">Upload a file or use your camera</p>
+            </div>
             <Card className="glass-effect mt-4">
               <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-left">
+                    <h3 className="text-base font-semibold text-foreground">Analyze Media</h3>
+                    <p className="text-xs text-muted-foreground">Upload a file or use your camera</p>
+                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex items-center">
+                        <Info className="h-4 w-4 mr-1" />
+                        Formats & limits
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Supported formats and limits</DialogTitle>
+                        <DialogDescription>
+                          Upload up to 10MB per file. These formats work best:
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <div className="font-medium">Images</div>
+                          <div className="text-muted-foreground">JPEG, PNG, WebP</div>
+                        </div>
+                        <div>
+                          <div className="font-medium">Videos</div>
+                          <div className="text-muted-foreground">MP4, WebM, MOV</div>
+                        </div>
+                        <div>
+                          <div className="font-medium">Audio</div>
+                          <div className="text-muted-foreground">WAV, MP3, M4A, OGG</div>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Tip: Higher quality media improves detection accuracy.
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 {canAnalyze ? (
                   <Tabs defaultValue="upload" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
@@ -403,72 +352,11 @@ export default function Dashboard() {
                 ) : (
                   <div className="text-center py-8">
                     <AlertCircle className="h-12 w-12 text-warning mx-auto mb-4" />
-                    <Text size="lg" weight="semibold" className="mb-2">Usage Limit Reached</Text>
-                    <Text className="mb-4">
-                      You've used all your monthly analyses. Upgrade to continue detecting deepfakes.
-                    </Text>
+                    <div className="text-lg font-semibold text-foreground mb-2">Usage Limit Reached</div>
+                    <p className="text-muted-foreground mb-4">You've used all your monthly analyses. Upgrade to continue detecting deepfakes.</p>
                     <Button onClick={() => navigate('/pricing')}>Upgrade Plan</Button>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Welcome Section - Only show when no results */}
-            {results.length === 0 && (
-              <Card className="glass-effect mt-6">
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <Shield className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg mb-2">Welcome to DeepGuard</CardTitle>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Start protecting yourself from deepfakes and AI-generated content. Upload your first file to begin analysis.
-                      </p>
-                      <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-4 rounded-lg">
-                        <Text size="sm" weight="semibold" className="mb-2">What we detect:</Text>
-                        <ul className="text-xs text-muted-foreground space-y-1">
-                          <li>• Face-swap deepfakes</li>
-                          <li>• AI-generated images</li>
-                          <li>• Synthetic voice cloning</li>
-                          <li>• Video manipulation</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Current Plan Info */}
-            <Card className="glass-effect mt-6 border-blue-500/20 bg-blue-500/5">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <CardTitle className="text-base">Current Plan</CardTitle>
-                  <Badge className="bg-blue-500 text-white" variant="secondary">
-                    {tierInfo.name}
-                  </Badge>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Badge className={tierInfo.color}>
-                      {tierInfo.icon}
-                      <span className="ml-1">{tierInfo.name} Plan</span>
-                    </Badge>
-                    <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
-                      Upgrade Plan
-                    </Button>
-                  </div>
-                  <ul className="space-y-2">
-                    {tierInfo.features.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <CheckCircle className="h-4 w-4 text-success mr-2 flex-shrink-0" />
-                        <Text size="sm">{feature}</Text>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -486,6 +374,13 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                    {/* Confidence Gauge */}
+                    <div className="flex items-center justify-center">
+                      <ConfidenceGauge
+                        value={results[0].confidence}
+                        label={results[0].isDeepfake ? 'Deepfake likelihood' : 'Authenticity confidence'}
+                      />
+                    </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-primary mb-1">{results.length}</div>
                       <Caption>Analyses Completed</Caption>
@@ -522,105 +417,12 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-6">
-                {/* Quick Start Guide */}
-                <Card className="glass-effect">
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="flex-shrink-0">
-                        <Shield className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg mb-2">Quick Start</CardTitle>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Get started with DeepGuard in three simple steps
-                        </p>
-                        <div className="space-y-3">
-                          <div className="flex items-start space-x-3">
-                            <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
-                              1
-                            </div>
-                            <div>
-                              <Text size="sm" weight="medium">Upload a file</Text>
-                              <Caption>Choose an image, video, or audio file</Caption>
-                            </div>
-                          </div>
-                          <div className="flex items-start space-x-3">
-                            <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
-                              2
-                            </div>
-                            <div>
-                              <Text size="sm" weight="medium">AI Analysis</Text>
-                              <Caption>Our AI will analyze the content</Caption>
-                            </div>
-                          </div>
-                          <div className="flex items-start space-x-3">
-                            <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
-                              3
-                            </div>
-                            <div>
-                              <Text size="sm" weight="medium">Get Results</Text>
-                              <Caption>View detailed analysis report</Caption>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Supported Formats */}
-                <Card className="glass-effect mt-6 border-blue-500/20 bg-blue-500/5">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <CardTitle className="text-base">Supported Formats</CardTitle>
-                      <Badge className="bg-blue-500 text-white" variant="secondary">
-                        Info
-                      </Badge>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <Text size="sm" weight="medium" color="primary">Images</Text>
-                        <Caption>JPEG, PNG, WebP (max 10MB)</Caption>
-                      </div>
-                      <div>
-                        <Text size="sm" weight="medium" color="success">Videos</Text>
-                        <Caption>MP4, WebM, MOV (max 10MB)</Caption>
-                      </div>
-                      <div>
-                        <Text size="sm" weight="medium" color="warning">Audio</Text>
-                        <Caption>WAV, MP3, M4A, OGG (max 10MB)</Caption>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Tips */}
-                <Card className="glass-effect mt-6 border-green-500/20 bg-green-500/5">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <CardTitle className="text-base">Pro Tips</CardTitle>
-                      <Badge className="bg-green-500 text-white" variant="secondary">
-                        Success
-                      </Badge>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-start space-x-2">
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                        <Caption>Higher resolution images provide better accuracy</Caption>
-                      </div>
-                      <div className="flex items-start space-x-2">
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                        <Caption>Use live camera for real-time analysis</Caption>
-                      </div>
-                      <div className="flex items-start space-x-2">
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                        <Caption>Check results page for detailed insights</Caption>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <Card className="glass-effect">
+                <CardContent className="p-6 text-center">
+                  <Shield className="h-6 w-6 text-primary mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Upload media or use the camera to start analyzing.</p>
+                </CardContent>
+              </Card>
             )}
             
             {/* Analysis Status */}
@@ -637,13 +439,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Success Modal */}
-      {showSuccess && lastResult && (
-        <AnalysisSuccess 
-          result={lastResult} 
-          onClose={() => setShowSuccess(false)} 
-        />
-      )}
+      {/* Success modal removed for cleaner UX */}
     </div>
   )
 }
