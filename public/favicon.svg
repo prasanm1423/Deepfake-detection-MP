@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Shield Background -->
+  <path d="M16 2L4 8v8c0 8 12 14 12 14s12-6 12-14V8L16 2z" fill="url(#shieldGradient)" stroke="#1E293B" stroke-width="1"/>
+  
+  <!-- Shield Inner Design -->
+  <path d="M16 6L8 10v6c0 6 8 10 8 10s8-4 8-10v-6L16 6z" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity="0.8"/>
+  
+  <!-- AI/Detection Symbol -->
+  <circle cx="16" cy="16" r="4" fill="#FFFFFF" opacity="0.9"/>
+  <path d="M14 16l1.5 1.5 3-3" stroke="#8B5CF6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Security Lines -->
+  <path d="M12 12h8M12 20h8" stroke="#FFFFFF" stroke-width="0.8" opacity="0.6"/>
+</svg>

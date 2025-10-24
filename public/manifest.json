@@ -1,0 +1,26 @@
+{
+  "name": "DeepGuard - AI-Powered Deepfake Detection",
+  "short_name": "DeepGuard",
+  "description": "Advanced AI-powered deepfake detection platform for images, videos, and audio content",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#8B5CF6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["security", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}
