@@ -1,287 +1,196 @@
-import { ReactNode } from 'react'
+import React from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
-import { Card, CardContent, CardHeader, CardTitle } from './card'
-import { Badge } from './badge'
 
-// Enhanced card with better visual hierarchy
 interface EnhancedCardProps {
-  children: ReactNode
-  className?: string
-  variant?: 'default' | 'elevated' | 'outlined' | 'glass'
-  hover?: boolean
-  interactive?: boolean
-  onClick?: () => void
-}
-
-export function EnhancedCard({ 
-  children, 
-  className, 
-  variant = 'default',
-  hover = false,
-  interactive = false,
-  onClick 
-}: EnhancedCardProps) {
-  const baseClasses = 'transition-all duration-200'
-  
-  const variantClasses = {
-    default: 'bg-card border-border',
-    elevated: 'bg-card border-border shadow-md',
-    outlined: 'bg-transparent border-2 border-border',
-    glass: 'bg-card/50 backdrop-blur-sm border-border/50'
-  }
-
-  const hoverClasses = hover ? 'hover:shadow-lg hover:scale-[1.02]' : ''
-  const interactiveClasses = interactive ? 'cursor-pointer active:scale-[0.98]' : ''
-
-  return (
-    <Card 
-      className={cn(
-        baseClasses,
-        variantClasses[variant],
-        hoverClasses,
-        interactiveClasses,
-        className
-      )}
-      onClick={onClick}
-    >
-      {children}
-    </Card>
-  )
-}
-
-// Feature card for highlighting key features
-interface FeatureCardProps {
-  icon: ReactNode
   title: string
-  description: string
-  className?: string
-  variant?: 'default' | 'primary' | 'success' | 'warning'
-}
-
-export function FeatureCard({ 
-  icon, 
-  title, 
-  description, 
-  className,
-  variant = 'default'
-}: FeatureCardProps) {
-  const variantClasses = {
-    default: 'border-primary/20 bg-primary/5',
-    primary: 'border-primary/30 bg-primary/10',
-    success: 'border-green-500/30 bg-green-500/10',
-    warning: 'border-yellow-500/30 bg-yellow-500/10'
-  }
-
-  return (
-    <EnhancedCard 
-      className={cn('text-center p-6', variantClasses[variant], className)}
-      hover
-    >
-      <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-        {icon}
-      </div>
-      <CardTitle className="text-lg mb-2">{title}</CardTitle>
-      <p className="text-sm text-muted-foreground">{description}</p>
-    </EnhancedCard>
-  )
-}
-
-// Stat card for displaying metrics
-interface StatCardProps {
-  title: string
-  value: string | number
   subtitle?: string
-  icon?: ReactNode
-  trend?: {
+  value: string | number
+  change?: {
     value: number
     isPositive: boolean
+    period: string
   }
+  icon?: React.ReactNode
+  trend?: 'up' | 'down' | 'stable'
+  status?: 'success' | 'warning' | 'danger' | 'info'
   className?: string
+  children?: React.ReactNode
 }
 
-export function StatCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon, 
-  trend, 
-  className 
-}: StatCardProps) {
-  return (
-    <EnhancedCard className={cn('p-4', className)} hover>
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold text-foreground">{value}</p>
-          {subtitle && (
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
-          )}
-          {trend && (
-            <div className="flex items-center mt-2">
-              <span className={cn(
-                'text-xs font-medium',
-                trend.isPositive ? 'text-green-600' : 'text-red-600'
-              )}>
-                {trend.isPositive ? '+' : ''}{trend.value}%
-              </span>
-              <span className="text-xs text-muted-foreground ml-1">from last month</span>
-            </div>
-          )}
-        </div>
-        {icon && (
-          <div className="flex-shrink-0">
-            {icon}
-          </div>
-        )}
-      </div>
-    </EnhancedCard>
-  )
-}
-
-// Action card for interactive content
-interface ActionCardProps {
-  title: string
-  description?: string
-  action?: ReactNode
-  icon?: ReactNode
-  className?: string
-  onClick?: () => void
-}
-
-export function ActionCard({ 
-  title, 
-  description, 
-  action, 
-  icon, 
+export function EnhancedCard({
+  title,
+  subtitle,
+  value,
+  change,
+  icon,
+  trend,
+  status,
   className,
-  onClick 
-}: ActionCardProps) {
-  return (
-    <EnhancedCard 
-      className={cn('p-6', className)}
-      interactive={!!onClick}
-      onClick={onClick}
-    >
-      <div className="flex items-start space-x-4">
-        {icon && (
-          <div className="flex-shrink-0">
-            {icon}
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <CardTitle className="text-lg mb-2">{title}</CardTitle>
-          {description && (
-            <p className="text-sm text-muted-foreground mb-4">{description}</p>
-          )}
-          {action && (
-            <div className="flex items-center justify-between">
-              {action}
-            </div>
-          )}
-        </div>
-      </div>
-    </EnhancedCard>
-  )
-}
-
-// Info card for displaying information with status
-interface InfoCardProps {
-  title: string
-  content: ReactNode
-  status?: 'info' | 'success' | 'warning' | 'error'
-  badge?: string
-  className?: string
-}
-
-export function InfoCard({ 
-  title, 
-  content, 
-  status = 'info',
-  badge,
-  className 
-}: InfoCardProps) {
-  const statusClasses = {
-    info: 'border-blue-500/20 bg-blue-500/5',
-    success: 'border-green-500/20 bg-green-500/5',
-    warning: 'border-yellow-500/20 bg-yellow-500/5',
-    error: 'border-red-500/20 bg-red-500/5'
+  children
+}: EnhancedCardProps) {
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case 'success': return 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20'
+      case 'warning': return 'border-yellow-200 bg-yellow-50/50 dark:border-yellow-800 dark:bg-yellow-950/20'
+      case 'danger': return 'border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20'
+      case 'info': return 'border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20'
+      default: return 'border-border/20'
+    }
   }
 
-  const statusColors = {
-    info: 'bg-blue-500 text-white',
-    success: 'bg-green-500 text-white',
-    warning: 'bg-yellow-500 text-white',
-    error: 'bg-red-500 text-white'
+  const getTrendIcon = (trend?: string) => {
+    switch (trend) {
+      case 'up': return '↗'
+      case 'down': return '↘'
+      case 'stable': return '→'
+      default: return null
+    }
   }
 
   return (
-    <EnhancedCard className={cn('p-4', statusClasses[status], className)}>
-      <CardHeader className="p-0 pb-3">
+    <Card className={cn(
+      'glass-effect transition-all duration-300 hover:shadow-lg hover:scale-[1.02]',
+      getStatusColor(status),
+      className
+    )}>
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">{title}</CardTitle>
-          {badge && (
-            <Badge className={statusColors[status]} variant="secondary">
-              {badge}
+          <div className="flex items-center space-x-3">
+            {icon && (
+              <div className="p-2 rounded-lg bg-primary/10">
+                {icon}
+              </div>
+            )}
+            <div>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {title}
+              </CardTitle>
+              {subtitle && (
+                <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+              )}
+            </div>
+          </div>
+          {trend && (
+            <Badge variant="outline" className="text-xs">
+              {getTrendIcon(trend)}
             </Badge>
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        {content}
+      <CardContent className="pt-0">
+        <div className="space-y-3">
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-bold text-foreground">
+              {value}
+            </span>
+            {change && (
+              <div className="flex items-center space-x-1">
+                <span className={cn(
+                  'text-xs font-medium',
+                  change.isPositive ? 'text-green-600' : 'text-red-600'
+                )}>
+                  {change.isPositive ? '+' : ''}{change.value}%
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {change.period}
+                </span>
+              </div>
+            )}
+          </div>
+          {children}
+        </div>
       </CardContent>
-    </EnhancedCard>
+    </Card>
   )
 }
 
-// Comparison card for side-by-side content
-interface ComparisonCardProps {
-  leftTitle: string
-  leftValue: string | number
-  rightTitle: string
-  rightValue: string | number
-  className?: string
-  showComparison?: boolean
+interface AnalysisCardProps {
+  result: any
+  index: number
+  onExpand: (index: number) => void
+  isExpanded: boolean
 }
 
-export function ComparisonCard({ 
-  leftTitle, 
-  leftValue, 
-  rightTitle, 
-  rightValue, 
-  className,
-  showComparison = true
-}: ComparisonCardProps) {
-  const leftNum = typeof leftValue === 'number' ? leftValue : parseFloat(leftValue)
-  const rightNum = typeof rightValue === 'number' ? rightValue : parseFloat(rightValue)
-  const difference = rightNum - leftNum
-  const percentageChange = leftNum !== 0 ? (difference / leftNum) * 100 : 0
+export function AnalysisCard({ result, index, onExpand, isExpanded }: AnalysisCardProps) {
+  const getRiskColor = (riskLevel: string) => {
+    switch (riskLevel) {
+      case 'CRITICAL': return 'border-red-500 bg-red-50/50 dark:bg-red-950/20'
+      case 'HIGH': return 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/20'
+      case 'MEDIUM': return 'border-yellow-500 bg-yellow-50/50 dark:bg-yellow-950/20'
+      case 'LOW': return 'border-green-500 bg-green-50/50 dark:bg-green-950/20'
+      default: return 'border-border/20'
+    }
+  }
 
   return (
-    <EnhancedCard className={cn('p-4', className)} hover>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground mb-1">{leftTitle}</p>
-          <p className="text-2xl font-bold text-foreground">{leftValue}</p>
-        </div>
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground mb-1">{rightTitle}</p>
-          <p className="text-2xl font-bold text-foreground">{rightValue}</p>
-        </div>
-      </div>
-      
-      {showComparison && (
-        <div className="mt-4 pt-4 border-t border-border/20">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-1">Change</p>
-            <p className={cn(
-              'text-lg font-semibold',
-              difference > 0 ? 'text-green-600' : difference < 0 ? 'text-red-600' : 'text-foreground'
-            )}>
-              {difference > 0 ? '+' : ''}{difference.toFixed(1)} ({percentageChange > 0 ? '+' : ''}{percentageChange.toFixed(1)}%)
-            </p>
+    <Card className={cn(
+      'glass-effect transition-all duration-300 hover:shadow-lg',
+      getRiskColor(result.riskLevel || 'LOW')
+    )}>
+      <CardContent className="p-4">
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className={cn(
+                'w-3 h-3 rounded-full',
+                result.isDeepfake ? 'bg-red-500' : 'bg-green-500'
+              )} />
+              <div>
+                <h3 className="font-semibold text-foreground capitalize">
+                  {result.type} Analysis
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {result.isDeepfake ? 'Potential deepfake detected' : 'Appears authentic'}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end space-y-1">
+              <Badge
+                variant={result.isDeepfake ? 'destructive' : 'default'}
+                className={result.isDeepfake ? '' : 'bg-green-500 text-white'}
+              >
+                {result.isDeepfake ? 'DEEPFAKE' : 'AUTHENTIC'}
+              </Badge>
+              {result.riskLevel && (
+                <Badge variant="outline" className="text-xs">
+                  {result.riskLevel} RISK
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Confidence Bar */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Confidence</span>
+              <span className="font-medium">
+                {(result.confidence * 100).toFixed(1)}%
+              </span>
+            </div>
+            <Progress 
+              value={result.confidence * 100} 
+              className="h-2"
+            />
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex space-x-2">
+            <button
+              onClick={() => onExpand(index)}
+              className="flex-1 text-xs py-2 px-3 rounded-md bg-secondary/50 hover:bg-secondary transition-colors"
+            >
+              {isExpanded ? 'Hide Details' : 'Show Details'}
+            </button>
+            <button className="text-xs py-2 px-3 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors">
+              Export
+            </button>
           </div>
         </div>
-      )}
-    </EnhancedCard>
+      </CardContent>
+    </Card>
   )
 }
