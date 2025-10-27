@@ -135,7 +135,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen gradient-bg">
+    <div className="min-h-screen gradient-bg animate-in fade-in duration-500">
       {/* Mobile Header */}
       <MobileHeader
         title="DeepGuard Dashboard"
@@ -221,8 +221,8 @@ export default function Dashboard() {
 
         {/* Session Stats */}
         {results.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <Card className="glass-effect">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-in slide-in-from-bottom-4 duration-700">
+            <Card className="glass-effect hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2">
                   <BarChart3 className="h-5 w-5 text-primary" />
@@ -234,7 +234,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="glass-effect">
+            <Card className="glass-effect hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-5 w-5 text-success" />
@@ -250,7 +250,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="glass-effect">
+            <Card className="glass-effect hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2">
                   <AlertCircle className="h-5 w-5 text-danger" />
@@ -266,7 +266,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="glass-effect">
+            <Card className="glass-effect hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2">
                   <Zap className="h-5 w-5 text-primary" />
@@ -297,7 +297,7 @@ export default function Dashboard() {
               <h2 className="text-2xl font-bold text-foreground">Deepfake Detection</h2>
               <p className="text-sm text-muted-foreground">Upload a file or use your camera</p>
             </div>
-            <Card className="glass-effect mt-4">
+            <Card className="glass-effect mt-4 hover:shadow-md transition-all duration-300">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-left">

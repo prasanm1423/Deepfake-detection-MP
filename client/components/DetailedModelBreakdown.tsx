@@ -77,7 +77,7 @@ export function DetailedModelBreakdown({ result }: DetailedModelBreakdownProps) 
   );
 
   return (
-    <Card className="glass-effect border-2 border-border/50">
+    <Card className="glass-effect border-2 border-border/50 animate-in slide-in-from-bottom-4 duration-700">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold text-foreground">

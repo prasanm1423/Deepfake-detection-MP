@@ -97,8 +97,8 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen gradient-bg flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen gradient-bg flex items-center justify-center px-4 animate-in fade-in duration-500">
+      <div className="w-full max-w-md animate-in slide-in-from-bottom-8 duration-700">
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-3 mb-6 text-foreground hover:text-primary transition-colors">

@@ -59,7 +59,7 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen gradient-bg">
+    <div className="min-h-screen gradient-bg animate-in fade-in duration-500">
       {/* Header */}
       <div className="border-b border-border/20 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-6">

@@ -220,7 +220,7 @@ export default function AnalysisHistory() {
   }
 
   return (
-    <div className="min-h-screen gradient-bg">
+    <div className="min-h-screen gradient-bg animate-in fade-in duration-500">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

@@ -112,7 +112,7 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
       <div className="space-y-3">
                  {results.map((result, index) => {
            return (
-          <Card key={index} className="glass-effect">
+          <Card key={index} className="glass-effect hover:shadow-lg transition-all duration-300 animate-in slide-in-from-bottom-2" style={{animationDelay: `${index * 100}ms`}}>
             <CardContent className="p-4">
               <div className="space-y-4">
                 {/* Main Result Header */}

@@ -59,7 +59,7 @@ export default function Pricing() {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background animate-in fade-in duration-500">
       {/* Navigation Header */}
       <div className="border-b border-border/20 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
         <div className="container mx-auto px-4 py-4">
