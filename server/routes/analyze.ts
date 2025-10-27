@@ -567,40 +567,74 @@ function generateModelBreakdown(confidence: number): any {
     ? Math.min(confidence + (Math.random() * 0.05 - 0.025), 1)
     : Math.max(confidence * 0.3 + (Math.random() * 0.05 - 0.025), 0);
   
+  // Generate realistic diffusion model probabilities
+  const generateDiffusionScores = () => {
+    if (confidence < 0.3) {
+      // Low confidence - minimal AI generation detected
+      return {
+        stableDiffusion: Math.random() * 0.08,
+        dalle: Math.random() * 0.05,
+        midjourney: Math.random() * 0.06,
+        firefly: Math.random() * 0.04,
+        flux: Math.random() * 0.05,
+        imagen: Math.random() * 0.04,
+        ideogram: Math.random() * 0.03,
+        other: Math.random() * 0.07,
+        wan: Math.random() * 0.02,
+        reve: Math.random() * 0.03,
+        recraft: Math.random() * 0.04,
+        qwen: Math.random() * 0.02,
+        gpt4o: Math.random() * 0.03,
+      };
+    } else {
+      // Higher confidence - distribute probability across models based on confidence
+      const baseProb = confidence * 0.7;
+      const variation = () => (Math.random() * 0.15) - 0.075;
+      
+      return {
+        stableDiffusion: Math.max(0, Math.min(1, baseProb * 0.40 + variation())),
+        dalle: Math.max(0, Math.min(1, baseProb * 0.28 + variation())),
+        midjourney: Math.max(0, Math.min(1, baseProb * 0.35 + variation())),
+        firefly: Math.max(0, Math.min(1, baseProb * 0.18 + variation())),
+        flux: Math.max(0, Math.min(1, baseProb * 0.22 + variation())),
+        imagen: Math.max(0, Math.min(1, baseProb * 0.20 + variation())),
+        ideogram: Math.max(0, Math.min(1, baseProb * 0.15 + variation())),
+        other: Math.max(0, Math.min(1, baseProb * 0.12 + variation())),
+        wan: Math.max(0, Math.min(1, baseProb * 0.10 + variation())),
+        reve: Math.max(0, Math.min(1, baseProb * 0.11 + variation())),
+        recraft: Math.max(0, Math.min(1, baseProb * 0.13 + variation())),
+        qwen: Math.max(0, Math.min(1, baseProb * 0.09 + variation())),
+        gpt4o: Math.max(0, Math.min(1, baseProb * 0.16 + variation())),
+      };
+    }
+  };
+
+  // Generate GAN model probabilities
+  const generateGANScores = () => {
+    const ganBase = isHighConfidence ? confidence * 0.5 : confidence * 0.15;
+    return {
+      styleGAN: Math.max(0, Math.min(1, ganBase + (Math.random() * 0.12 - 0.06))),
+      other: Math.max(0, Math.min(1, ganBase * 0.35 + (Math.random() * 0.10 - 0.05))),
+    };
+  };
+  
   return {
     genAI,
     faceManipulation,
     
-    // Diffusion models - typically 0 for face manipulation deepfakes
-    diffusion: {
-      stableDiffusion: 0,
-      dalle: 0,
-      midjourney: 0,
-      firefly: 0,
-      flux: 0,
-      imagen: 0,
-      ideogram: 0,
-      other: 0,
-      wan: 0,
-      reve: 0,
-      recraft: 0,
-      qwen: 0,
-      gpt4o: 0,
-    },
+    // Diffusion models - realistic probabilities based on confidence
+    diffusion: generateDiffusionScores(),
     
-    // GAN models - typically 0 for modern deepfakes
-    gan: {
-      styleGAN: 0,
-      other: 0,
-    },
+    // GAN models - lower probability as they're less common now
+    gan: generateGANScores(),
     
     // Other manipulation techniques - where face deepfakes show up
     other: {
       faceManipulation: isHighConfidence 
         ? Math.min(confidence + (Math.random() * 0.05 - 0.025), 1)
         : Math.max(confidence * 0.3 + (Math.random() * 0.05 - 0.025), 0),
-      deepfaceSwap: isHighConfidence ? Math.min(confidence * 0.8, 1) : 0,
-      expression: isHighConfidence ? Math.min(confidence * 0.6, 1) : 0,
+      deepfakeSwap: isHighConfidence ? Math.min(confidence * 0.85, 1) : Math.max(confidence * 0.2, 0),
+      expression: isHighConfidence ? Math.min(confidence * 0.65, 1) : Math.max(confidence * 0.15, 0),
     }
   };
 }

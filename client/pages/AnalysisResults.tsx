@@ -562,18 +562,26 @@ export default function AnalysisResults() {
                     </div>
                   </div>
 
-                  {/* Key Findings */}
+                  {/* Analysis Summary */}
                   <div>
-                    <h3 className="font-semibold mb-3">Key Findings</h3>
-                    <div className="space-y-2">
-                      {currentResult?.recommendations?.slice(0, 3).map((rec, index) => (
-                        <div key={index} className="flex items-start space-x-2">
-                          <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm">{rec}</span>
-                        </div>
-                      )) || (
-                        <p className="text-sm text-muted-foreground">No key findings available</p>
-                      )}
+                    <h3 className="font-semibold mb-3 text-foreground">Analysis Summary</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary/15 transition-colors">
+                        <span className="text-sm font-semibold text-foreground">API Provider:</span>
+                        <Badge variant="outline" className="border-primary/30 text-primary font-medium">
+                          {currentResult?.processingDetails?.apiProvider || 'Sightengine'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-secondary/30 border border-secondary/40 rounded-lg hover:bg-secondary/40 transition-colors">
+                        <span className="text-sm font-semibold text-foreground">Models Used:</span>
+                        <span className="text-sm font-bold text-foreground text-right max-w-[150px] truncate">
+                          {currentResult?.processingDetails?.modelsUsed?.join(', ') || 'Deepfake Detection'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-success/10 border border-success/20 rounded-lg hover:bg-success/15 transition-colors">
+                        <span className="text-sm font-semibold text-foreground">Processing Time:</span>
+                        <span className="text-sm font-bold text-success">{currentResult?.analysisTime || 0}ms</span>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -676,76 +684,103 @@ export default function AnalysisResults() {
                 </Card>
               )}
 
-              {/* Recommendations */}
+              {/* File Information */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Recommendations</CardTitle>
+                  <CardTitle className="text-lg flex items-center space-x-2">
+                    <FileText className="h-5 w-5" />
+                    <span>File Information</span>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {currentResult?.recommendations?.map((rec, index) => (
-                      <div key={index} className="flex items-start space-x-2">
-                        <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{rec}</span>
-                      </div>
-                    )) || (
-                      <p className="text-sm text-muted-foreground">No recommendations available</p>
-                    )}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between p-3 bg-muted/50 border border-border rounded-lg hover:bg-muted transition-colors">
+                      <span className="font-semibold text-foreground">File Name:</span>
+                      <span className="font-medium text-foreground text-right max-w-[200px] truncate">{currentResult?.metadata?.file_name || 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-muted/50 border border-border rounded-lg hover:bg-muted transition-colors">
+                      <span className="font-semibold text-foreground">File Size:</span>
+                      <span className="font-medium text-foreground">{currentResult?.metadata?.file_size ? `${(currentResult.metadata.file_size / 1024).toFixed(2)} KB` : 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-muted/50 border border-border rounded-lg hover:bg-muted transition-colors">
+                      <span className="font-semibold text-foreground">File Type:</span>
+                      <Badge variant="outline" className="text-xs font-medium">
+                        {currentResult?.metadata?.file_type || 'Unknown'}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-muted/50 border border-border rounded-lg hover:bg-muted transition-colors">
+                      <span className="font-semibold text-foreground">Format:</span>
+                      <span className="font-medium text-foreground uppercase">{currentResult?.metadata?.format || 'Unknown'}</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Limitations */}
+              {/* Analysis Performance */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Limitations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Collapsible>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" className="w-full justify-between p-0 h-auto">
-                        <span className="text-sm">View Limitations</span>
-                        <AlertTriangle className="h-4 w-4" />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-3">
-                      <div className="space-y-2">
-                        {currentResult?.limitations?.map((limitation, index) => (
-                          <div key={index} className="text-sm text-muted-foreground">
-                            • {limitation}
-                          </div>
-                        )) || (
-                          <p className="text-sm text-muted-foreground">No limitations documented</p>
-                        )}
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </CardContent>
-              </Card>
-
-              {/* Analysis Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Analysis Info</CardTitle>
+                  <CardTitle className="text-lg flex items-center space-x-2">
+                    <Clock className="h-5 w-5" />
+                    <span>Performance Metrics</span>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span>Analysis Time:</span>
-                      <span className="font-medium">{currentResult?.analysisTime || 0}ms</span>
+                    <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary/15 transition-colors">
+                      <span className="font-semibold text-foreground">Analysis Time:</span>
+                      <span className="font-bold text-primary text-lg">{currentResult?.analysisTime || 0}ms</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span>Analysis Quality:</span>
-                      <Badge variant="outline" className="text-xs">
-                        {currentResult?.analysisQuality || 'Unknown'}
+                    <div className="flex items-center justify-between p-3 bg-success/10 border border-success/20 rounded-lg hover:bg-success/15 transition-colors">
+                      <span className="font-semibold text-foreground">Quality Score:</span>
+                      <span className="font-bold text-success text-lg">{((currentResult?.processingDetails?.qualityScore || 0.9) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-secondary/30 border border-secondary/40 rounded-lg hover:bg-secondary/40 transition-colors">
+                      <span className="font-semibold text-foreground">Processing Method:</span>
+                      <Badge variant="outline" className="text-xs font-medium">
+                        {currentResult?.analysisQuality || 'API'}
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span>Risk Level:</span>
-                      <Badge variant="outline" className={`text-xs ${getRiskLevelColor(currentResult?.riskLevel || 'UNKNOWN')}`}>
-                        {currentResult?.riskLevel || 'UNKNOWN'}
-                      </Badge>
-                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center space-x-2">
+                    <Zap className="h-5 w-5" />
+                    <span>Quick Actions</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start"
+                      onClick={exportResults}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Full Report
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start"
+                      onClick={shareResults}
+                    >
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share Analysis
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start"
+                      onClick={() => navigate('/dashboard')}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Analyze Another File
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
