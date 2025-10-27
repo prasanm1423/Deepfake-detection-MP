@@ -23,19 +23,20 @@ import {
   Volume2,
   Image as ImageIcon,
   Video as VideoIcon,
-  Music
+  Music,
+  Upload
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { AnalysisResult } from '@shared/api'
 import { toast } from '@/hooks/use-toast'
+import { DetailedModelBreakdown } from '@/components/DetailedModelBreakdown'
 
 interface LocationState {
   results?: AnalysisResult[]
@@ -48,8 +49,6 @@ export default function AnalysisResults() {
   const { user } = useAuth()
   const [results, setResults] = useState<AnalysisResult[]>([])
   const [currentResult, setCurrentResult] = useState<AnalysisResult | null>(null)
-  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false)
-  const [selectedTab, setSelectedTab] = useState('overview')
   const [isLoading, setIsLoading] = useState(true)
   const [isPlaying, setIsPlaying] = useState(false)
   const [mediaUrl, setMediaUrl] = useState<string | null>(null)
@@ -125,29 +124,40 @@ export default function AnalysisResults() {
     const url = URL.createObjectURL(dataBlob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `analysis-result-${Date.now()}.json`
+    link.download = `deepguard-analysis-${currentResult.type}-${Date.now()}.json`
     link.click()
     URL.revokeObjectURL(url)
 
     toast({
-      title: "Exported!",
-      description: "Analysis results exported successfully",
+      title: "📥 Report Downloaded",
+      description: "Your analysis report has been downloaded successfully.",
     })
   }
 
-  const shareResults = () => {
+  const shareResults = async () => {
     if (!currentResult) return
 
-    const shareData = {
-      title: 'Deepfake Analysis Results',
-              text: `Analysis Result: ${currentResult?.isDeepfake ? 'DEEPFAKE DETECTED' : 'AUTHENTIC'} (${Math.round((currentResult?.confidence || 0) * 100)}% confidence)`,
-      url: window.location.href,
-    }
+    const shareText = `🔍 DeepGuard Analysis Result\n\n${currentResult.isDeepfake ? '⚠️ Deepfake Detected' : '✅ Authentic Content'}\n\nConfidence: ${Math.round(currentResult.confidence * 100)}%\nRisk Level: ${currentResult.riskLevel}\nAnalysis Time: ${currentResult.analysisTime}ms\n\nAnalyzed with DeepGuard - Advanced Deepfake Detection`
 
     if (navigator.share) {
-      navigator.share(shareData)
+      try {
+        await navigator.share({
+          title: 'DeepGuard Analysis',
+          text: shareText,
+        })
+        toast({
+          title: "📤 Shared Successfully",
+          description: "Analysis results have been shared.",
+        })
+      } catch (error) {
+        console.log('Share cancelled or failed:', error)
+      }
     } else {
-      copyToClipboard(window.location.href, 'Share URL')
+      navigator.clipboard.writeText(shareText)
+      toast({
+        title: "📋 Copied to Clipboard",
+        description: "Analysis results copied to clipboard.",
+      })
     }
   }
 
@@ -411,37 +421,84 @@ export default function AnalysisResults() {
   return (
     <div className="min-h-screen gradient-bg">
       <TooltipProvider>
-        <div className="container mx-auto px-4 py-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/dashboard')}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
+        <div className="container mx-auto px-4 py-6 animate-in fade-in duration-500">
+          {/* Header with Breadcrumb */}
+          <div className="mb-4">
+            <div className="flex items-center text-sm text-muted-foreground mb-4">
+              <Link to="/dashboard" className="hover:text-foreground transition-colors">
+                Dashboard
+              </Link>
+              <span className="mx-2">/</span>
+              <span className="text-foreground font-medium">Analysis Results</span>
+            </div>
+            
+            <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold">Analysis Results</h1>
+                <h1 className="text-3xl font-bold mb-1">Analysis Results</h1>
                 <p className="text-muted-foreground">
                   {currentResult?.type?.toUpperCase() || 'Loading...'} Analysis • {new Date().toLocaleDateString()}
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={exportResults}>
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              <Button variant="outline" size="sm" onClick={shareResults}>
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
-            </div>
           </div>
+
+          {/* Quick Actions Bar */}
+          <Card className="mb-6 border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+            <CardContent className="p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/dashboard')}
+                    className="hover:bg-primary/10"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Dashboard
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Analyze Another File
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={exportResults}
+                    className="hover:bg-green-50 hover:text-green-700 hover:border-green-300"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Report
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={shareResults}
+                    className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share Results
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => navigate('/history')}
+                    className="hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300"
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    View History
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Main Content */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -522,21 +579,19 @@ export default function AnalysisResults() {
                 </CardContent>
               </Card>
 
-              {/* Detailed Analysis Tabs */}
+              {/* Detailed Analysis - Overview Only */}
               <Card>
                 <CardHeader>
                   <CardTitle>Detailed Analysis</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-                    <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="overview">Overview</TabsTrigger>
-                      <TabsTrigger value="technical">Technical</TabsTrigger>
-                      <TabsTrigger value="metadata">Metadata</TabsTrigger>
-                      <TabsTrigger value="raw">Raw Data</TabsTrigger>
-                    </TabsList>
+                <CardContent className="space-y-4">
+                  {/* Detailed Model Breakdown */}
+                  {currentResult?.modelBreakdown && (
+                    <div className="mb-6">
+                      <DetailedModelBreakdown result={currentResult} />
+                    </div>
+                  )}
 
-                    <TabsContent value="overview" className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <h4 className="font-semibold mb-2">Processing Details</h4>
@@ -571,86 +626,6 @@ export default function AnalysisResults() {
                           </div>
                         </div>
                       </div>
-                    </TabsContent>
-
-                    <TabsContent value="technical" className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold mb-3">Technical Analysis</h4>
-                        {currentResult?.type === 'image' && currentResult?.imageAnalysis && (
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <Card>
-                                <CardHeader className="pb-2">
-                                  <CardTitle className="text-sm">Face Detection</CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-0">
-                                  <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                      <span>Faces Detected:</span>
-                                      <span>{currentResult?.imageAnalysis?.faceDetection?.facesDetected || 0}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span>Face Quality:</span>
-                                      <span>{Math.round((currentResult?.imageAnalysis?.faceDetection?.faceQuality || 0) * 100)}%</span>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                              <Card>
-                                <CardHeader className="pb-2">
-                                  <CardTitle className="text-sm">Manipulation Indicators</CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-0">
-                                  <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                      <span>Compression Artifacts:</span>
-                                      <span>{Math.round((currentResult?.imageAnalysis?.manipulationIndicators?.compressionArtifacts || 0) * 100)}%</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span>Editing Signs:</span>
-                                      <span>{Math.round((currentResult?.imageAnalysis?.manipulationIndicators?.editingSigns || 0) * 100)}%</span>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="metadata" className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold mb-3">File Metadata</h4>
-                        <div className="bg-muted p-4 rounded-lg">
-                          <pre className="text-sm overflow-x-auto">
-                            {JSON.stringify(currentResult?.metadata || {}, null, 2)}
-                          </pre>
-                        </div>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="raw" className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold">Raw API Response</h4>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-                        >
-                          {showTechnicalDetails ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          {showTechnicalDetails ? 'Hide' : 'Show'} Details
-                        </Button>
-                      </div>
-                      {showTechnicalDetails && (
-                        <div className="bg-muted p-4 rounded-lg">
-                          <pre className="text-xs overflow-x-auto">
-                            {JSON.stringify(currentResult || {}, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-                    </TabsContent>
-                  </Tabs>
                 </CardContent>
               </Card>
             </div>

@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Caption } from '@/components/ui/typography'
 import { AnalysisResult } from '@shared/api'
 import { trackAnalysis, saveAnalysisToHistory } from '@/lib/supabase'
+import { toast } from '@/hooks/use-toast'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -102,7 +103,22 @@ export default function Dashboard() {
       // Don't block the UI - tracking is optional
     }
 
-    // No success modal
+    // Show success toast notification
+    toast({
+      title: result.isDeepfake ? "⚠️ Deepfake Detected" : "✅ Content Authentic",
+      description: `Analysis complete with ${Math.round(result.confidence * 100)}% confidence. Redirecting to results...`,
+      variant: result.isDeepfake ? "destructive" : "default",
+    })
+
+    // Auto-redirect to results page after brief delay
+    setTimeout(() => {
+      navigate('/results', { 
+        state: { 
+          results: newResults,
+          currentResult: result 
+        } 
+      })
+    }, 800)
   }
 
   const clearResults = () => {

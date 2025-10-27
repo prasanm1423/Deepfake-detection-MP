@@ -6,6 +6,44 @@
 /**
  * Enhanced analysis result types with detailed reporting
  */
+/**
+ * Detailed model breakdown for deepfake detection
+ */
+export interface ModelBreakdown {
+  genAI: number;  // Overall generative AI probability (0-1)
+  faceManipulation: number;  // Face manipulation probability (0-1)
+  
+  // Diffusion models breakdown
+  diffusion: {
+    stableDiffusion: number;
+    dalle: number;
+    midjourney: number;
+    firefly: number;
+    flux: number;
+    imagen: number;
+    ideogram: number;
+    other: number;
+    wan: number;
+    reve: number;
+    recraft: number;
+    qwen: number;
+    gpt4o: number;
+  };
+  
+  // GAN models breakdown  
+  gan: {
+    styleGAN: number;
+    other: number;
+  };
+  
+  // Other manipulation techniques
+  other: {
+    faceManipulation: number;
+    deepfaceSwap: number;
+    expression: number;
+  };
+}
+
 export interface BaseAnalysisResult {
   isDeepfake: boolean;
   confidence: number;
@@ -18,6 +56,8 @@ export interface BaseAnalysisResult {
   processingDetails: ProcessingDetails;
   recommendations: string[];
   limitations: string[];
+  // Detailed model breakdown
+  modelBreakdown?: ModelBreakdown;
 }
 
 export interface ProcessingDetails {

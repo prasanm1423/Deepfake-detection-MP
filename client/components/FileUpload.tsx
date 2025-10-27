@@ -179,17 +179,21 @@ export default function FileUpload({ onAnalysisComplete, onAnalysisStart }: File
       const result: AnalysisResult = responseData.result
 
       // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => setTimeout(resolve, 500))
 
       setAnalysisStage('complete')
-      setIsAnalyzing(false)
-
-      // Show completion state briefly
+      
+      // Show completion state briefly with smooth transition
       setTimeout(() => {
+        setIsAnalyzing(false)
         onAnalysisComplete(result)
-        setProgress(0)
-        setAnalysisStage('idle')
-      }, 1500)
+        
+        // Reset state after callback
+        setTimeout(() => {
+          setProgress(0)
+          setAnalysisStage('idle')
+        }, 300)
+      }, 1200)
 
     } catch (error) {
       console.error('Analysis failed:', error)
@@ -296,7 +300,7 @@ export default function FileUpload({ onAnalysisComplete, onAnalysisStart }: File
 
       {/* Analysis Progress */}
       {isAnalyzing && (
-        <Card className="glass-effect border-primary/20">
+        <Card className="glass-effect border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <CardContent className="p-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -332,11 +336,11 @@ export default function FileUpload({ onAnalysisComplete, onAnalysisStart }: File
 
       {/* Analysis Button */}
       {file && !isAnalyzing && (
-        <div className="flex justify-center">
+        <div className="flex justify-center animate-in fade-in slide-in-from-bottom-2 duration-300">
           <Button
             onClick={handleAnalyze}
             size="lg"
-            className="min-w-[200px] hover:scale-105 transition-transform shadow-lg"
+            className="min-w-[200px] hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
             disabled={isAnalyzing}
           >
             {isAnalyzing ? (

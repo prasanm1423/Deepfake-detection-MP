@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AnalysisResult } from '@shared/api';
+import { DetailedModelBreakdown } from './DetailedModelBreakdown';
 
 interface ResultsDashboardProps {
   results: AnalysisResult[];
@@ -194,6 +195,13 @@ export function ResultsDashboard({ results, onClear }: ResultsDashboardProps) {
                     </span>
                   </div>
                 </div>
+
+                {/* Detailed Model Breakdown */}
+                {result.modelBreakdown && (
+                  <div className="pt-4">
+                    <DetailedModelBreakdown result={result} />
+                  </div>
+                )}
 
                                                   {/* Enhanced Recommendations */}
                  {'recommendations' in result && Array.isArray(result.recommendations) && result.recommendations.length > 0 && (
